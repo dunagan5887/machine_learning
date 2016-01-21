@@ -8,7 +8,7 @@
 
 function get_price_delta_since_date($since_date, $symbol)
 {
-    $file_path = '../historical_data/' . $symbol . '.csv';
+    $file_path = get_data_subdirectory('historical_data') . '/' . $symbol . '.csv';
     $stock_data = file_get_contents($file_path);
     $stock_data_as_array = explode("\n", $stock_data);
     $latest_date_data = $stock_data_as_array[1];

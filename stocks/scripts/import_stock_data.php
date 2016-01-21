@@ -6,6 +6,9 @@
  * Time: 1:56 PM
  */
 
+include('./utility.php');
+ensure_data_directory_exists();
+
 function get_file_data_as_array($file_path)
 {
     $csv_file_data = file_get_contents($file_path);
@@ -24,15 +27,17 @@ function download_stock_data_history_by_symbol($stock_symbol)
     // Date,Open,High,Low,Close,Volume,Adj Close,Symbol
     $symbol_included_historical_stock_data = str_replace("\n", ",$stock_symbol\n", $historical_stock_data);
 
-    $historical_stock_data_directory = "../historical_data/";
+    $historical_stock_data_directory = get_data_subdirectory('historical_data');
+    ensure_directory_exists($historical_stock_data_directory);
     $historical_stock_data_filename = $stock_symbol . '.csv';
     $filepath = $historical_stock_data_directory . $historical_stock_data_filename;
     file_put_contents($filepath, $symbol_included_historical_stock_data);
 }
 
-$download_dir = "/var/machine_learning/stocks/listings/";
-$nyse_file = $download_dir . "nyse.csv";
-$nasdaq_file = $download_dir . "nasdaq.csv";
+$listings_dir = get_data_subdirectory('listings');
+ensure_directory_exists($listings_dir);
+$nyse_file = $listings_dir . "nyse.csv";
+$nasdaq_file = $listings_dir . "nasdaq.csv";
 
 $files_array = array($nyse_file, $nasdaq_file);
 
