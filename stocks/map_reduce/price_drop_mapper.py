@@ -8,17 +8,23 @@
 
 import sys             #a python module with system functions for this OS
 
-# ------------------------------------------------------------
-#  this 'for loop' will set 'line' to an input line from system 
-#    standard input file
-# ------------------------------------------------------------
+# Import necessary modules for datetime functionality
+from datetime import timedelta
+import datetime
+
+date_to_track_from = '2015-12-29'
+today_datetime = datetime.date.today()
+#today_date = today_datetime.strftime('%Y-%m-%d')
+today_date = '2016-01-19'
+three_months_delta = timedelta(days=90)
+three_months_ago_datetime = today_datetime - three_months_delta
+three_months_ago = three_months_ago_datetime.strftime('%Y-%m-%d')
+one_year_delta = timedelta(days=365)
+one_year_ago_datetime = today_datetime - one_year_delta
+one_year_ago = one_year_ago_datetime.strftime('%Y-%m-%d')
+
 for line in sys.stdin:  
 
-#-----------------------------------
-#sys.stdin call 'sys' to read a line from standard input, 
-# note that 'line' is a string object, ie variable, and it has methods that you can apply to it,
-# as in the next line
-# ---------------------------------
     line = line.strip()  #strip is a method, ie function, associated
                          #  with string variable, it will strip 
                          #   the carriage return (by default)
@@ -31,13 +37,13 @@ for line in sys.stdin:
     data_symbol = data_points[7]
         
     if (data_date != 'Date'):
-    
-        date_to_track_from = '2015-12-29'
-        today_date = '2016-01-19'
-    
-        if (data_date == date_to_track_from):
-            print('{0}\t{1}\t{2}'.format(data_symbol, data_price, 'since') )
-        elif(data_date == today_date):
-            print('{0}\t{1}\t{2}'.format(data_symbol, data_price, 'today') )
+        if(data_date > one_year_ago):
+            print('{0}\t{1}\t{2}'.format(data_symbol, data_price, 'one_year') )
+            if(data_date > three_months_ago):
+                print('{0}\t{1}\t{2}'.format(data_symbol, data_price, 'three_months') )
+                if (data_date == date_to_track_from):
+                    print('{0}\t{1}\t{2}'.format(data_symbol, data_price, 'since') )
+                elif(data_date == today_date):
+                    print('{0}\t{1}\t{2}'.format(data_symbol, data_price, 'today') )
         
     
