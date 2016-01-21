@@ -12,6 +12,7 @@ def get_percentage_delta_off_average(list_of_prices, compare_price):
     list_average = list_sum / list_count
     delta = compare_price - list_average
     drop_percentage = delta / list_average
+
     return drop_percentage
 
 def reset_symbol_data():
@@ -46,17 +47,17 @@ for input_line in sys.stdin:
     price = float(price)
     
     if (last_symbol and (last_symbol != symbol)):
-        price_deltas_by_symbol[last_symbol] = symbol_since_total
         
         if last_start_price != 0:
+            price_deltas_by_symbol[last_symbol] = symbol_since_total
             percentage_delta = symbol_since_total / last_start_price
             percentage_deltas_by_symbol[last_symbol] = percentage_delta
             # Compute the three month average percentage delta
             three_month_drop_percentage = get_percentage_delta_off_average(three_month_prices, last_today_price)
             three_month_average_drop_by_symbol[last_symbol] = three_month_drop_percentage
             # Compute the one year average percentage delta
-            one_year_drop_percentage = get_percentage_delta_off_average(one_year_prices, last_today_price)
-            one_year_average_drop_by_symbol[symbol] = one_year_drop_percentage
+            one_year_delta_percentage = get_percentage_delta_off_average(one_year_prices, last_today_price)
+            one_year_average_drop_by_symbol[last_symbol] = one_year_delta_percentage
         else:
             no_last_start_price_file.write(last_symbol)
         
@@ -66,16 +67,21 @@ for input_line in sys.stdin:
         three_month_prices = list()
         one_year_prices = list()
 
-    if flag == 'since':
+    if flag == 'one_year':
+        one_year_prices.append(price)
+    elif flag == 'three_months':
+        three_month_prices.append(price)
+        one_year_prices.append(price)
+    elif flag == 'since':
+        three_month_prices.append(price)
+        one_year_prices.append(price)
         symbol_since_total -= price
         last_start_price = price
     elif flag == 'today':
         symbol_since_total += price
         last_today_price = price
-    elif flag == 'one_year':
-        one_year_prices.append(price)
-    elif flag == 'three_months':
         three_month_prices.append(price)
+        one_year_prices.append(price)
 
     last_symbol = symbol
 
@@ -89,7 +95,7 @@ if symbol_since_total != 0.0:
         three_month_average_drop_by_symbol[last_symbol] = three_month_delta_percentage
         # Compute the one year average percentage delta
         one_year_delta_percentage = get_percentage_delta_off_average(one_year_prices, last_today_price)
-        one_year_average_drop_by_symbol[symbol] = one_year_delta_percentage
+        one_year_average_drop_by_symbol[last_symbol] = one_year_delta_percentage
     else:
         no_last_start_price_file.write('{0}\n'.format(last_symbol))
 

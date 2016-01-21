@@ -35,15 +35,13 @@ for line in sys.stdin:
     data_date = data_points[0]
     data_price = data_points[4]
     data_symbol = data_points[7]
-        
-    if (data_date != 'Date'):
-        if(data_date > one_year_ago):
-            print('{0}\t{1}\t{2}'.format(data_symbol, data_price, 'one_year') )
-            if(data_date > three_months_ago):
-                print('{0}\t{1}\t{2}'.format(data_symbol, data_price, 'three_months') )
-                if (data_date == date_to_track_from):
-                    print('{0}\t{1}\t{2}'.format(data_symbol, data_price, 'since') )
-                elif(data_date == today_date):
-                    print('{0}\t{1}\t{2}'.format(data_symbol, data_price, 'today') )
-        
     
+    if (data_date != 'Date'):
+        if(data_date == today_date):
+            print('{0}\t{1}\t{2}'.format(data_symbol, data_price, 'today') )
+        elif (data_date == date_to_track_from):
+            print('{0}\t{1}\t{2}'.format(data_symbol, data_price, 'since') )
+        elif(data_date > three_months_ago):
+            print('{0}\t{1}\t{2}'.format(data_symbol, data_price, 'three_months') )
+        elif(data_date > one_year_ago):
+            print('{0}\t{1}\t{2}'.format(data_symbol, data_price, 'one_year') )
