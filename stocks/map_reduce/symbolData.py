@@ -4,6 +4,7 @@ class SymbolData:
     
     def __init__(self, symbol):
         self.symbol = symbol
+        self.today_price = None
         self.deltas = {}
         self.delta_before_value = {}
         self.delta_after_value = {}
@@ -102,7 +103,9 @@ class SymbolDataCollection:
         """
         delta_values_by_symbol = {}
         for symbol, symbolDataInstance in self.symbols_dict.items(): # type: SymbolData
-            delta_values_by_symbol[symbol] = symbolDataInstance.getDeltaByCode(delta_code)
+            symbol_delta_value = symbolDataInstance.getDeltaByCode(delta_code)
+            if not(symbol_delta_value is None):
+                delta_values_by_symbol[symbol] = symbol_delta_value
         sorted_delta_value_symbols_dictionary = sort_float_dictionary_ascending(delta_values_by_symbol)
         return sorted_delta_value_symbols_dictionary
 

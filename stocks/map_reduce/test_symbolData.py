@@ -97,6 +97,9 @@ class TestSymbolDataCollection(unittest.TestCase):
             testSymbolData.initializeDeltaByCode(delta_code)
             testSymbolData.setDeltaBeforeByCode(delta_code, delta_before_and_after_list[0])
             testSymbolData.setDeltaAfterByCode(delta_code, delta_before_and_after_list[1])
+        testNoBeforeValueSymbolData = newCollection.addSymbolToCollection('E')
+        testNoBeforeValueSymbolData.initializeDeltaByCode(delta_code)
+        testNoBeforeValueSymbolData.setDeltaAfterByCode(delta_code, 6.6)
         sorted_delta_values_by_code_dict = newCollection.getSortedDeltaValuesByCode(delta_code)
         self.assertEqual(expected_sorted_by_delta_dict, sorted_delta_values_by_code_dict, 'test_getSortedDeltaValuesByCode failed to return the expected sorted dictionary, returned {0}\nexpected: {1}'.format(sorted_delta_values_by_code_dict, expected_sorted_by_delta_dict))
 
@@ -124,6 +127,9 @@ class TestSymbolDataCollection(unittest.TestCase):
         thirdSymbolData.setTodayPrice(third_today_price)
         for price in third_span_prices:
             thirdSymbolData.addSpanValueByCode(test_span_code, price)
+
+        testNoneSymbolData = testCollection.addSymbolToCollection('D')
+        testNoneSymbolData.initializeSpanByCode(test_span_code)
 
         test_price_off_average_values_by_symbol = testCollection.getSortedTodayPricePercentageOffSpanAveragesByCode(test_span_code)
         expected_price_off_average_values_by_symbol = OrderedDict()

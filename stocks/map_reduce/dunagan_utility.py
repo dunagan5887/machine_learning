@@ -3,7 +3,6 @@ from collections import OrderedDict
 
 def sort_float_dictionary_ascending(dictionary_of_floats):
     """
-
     :param dict dictionary_of_floats:
     :return: OrderedDict
     """
