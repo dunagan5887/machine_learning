@@ -137,7 +137,12 @@ class TestSymbolDataCollection(unittest.TestCase):
         expected_price_off_average_values_by_symbol['A'] = -0.6905829596412556
         expected_price_off_average_values_by_symbol['B'] = 0.2289156626506022
         self.assertEqual(test_price_off_average_values_by_symbol, expected_price_off_average_values_by_symbol, 'The expected_price_off_average_values_by_symbol was {0}, but {1} was returned while testing getting the percentage delta of today price off of span average'.format(expected_price_off_average_values_by_symbol, test_price_off_average_values_by_symbol))
-
+        price_threshold = 2.0
+        test_sorted_dictionary_of_values_above_price_threshold = testCollection.getSortedDictionaryOfValuesAboveTodayPriceThreshold(test_price_off_average_values_by_symbol, price_threshold)
+        expected_price_off_average_values_by_symbol_above_threshold = OrderedDict()
+        expected_price_off_average_values_by_symbol_above_threshold['A'] = -0.6905829596412556
+        expected_price_off_average_values_by_symbol_above_threshold['B'] = 0.2289156626506022
+        self.assertEqual(test_sorted_dictionary_of_values_above_price_threshold, expected_price_off_average_values_by_symbol_above_threshold, 'The expected_price_off_average_values_by_symbol_above_threshold was {0} but {1} was returned'.format(expected_price_off_average_values_by_symbol_above_threshold, test_sorted_dictionary_of_values_above_price_threshold))
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,4 +1,5 @@
 from dunagan_utility import sort_float_dictionary_ascending
+from collections import OrderedDict
 
 class SymbolData:
     
@@ -125,3 +126,13 @@ class SymbolDataCollection:
             span_today_price_off_average_values_by_symbol[symbol] = today_price_percentage_off_delta
         sorted_span_today_price_off_average_values_by_symbol = sort_float_dictionary_ascending(span_today_price_off_average_values_by_symbol)
         return sorted_span_today_price_off_average_values_by_symbol
+
+    def getSortedDictionaryOfValuesAboveTodayPriceThreshold(self, sorted_dictionary, price_threshold):
+        sorted_dictionary_above_threshold = OrderedDict()
+        for symbol, symbol_value in sorted_dictionary.items():
+            symbolDataInstance = self.getSymbolData(symbol)
+            if not(symbolDataInstance is None):
+                symbol_today_price = symbolDataInstance.getTodayPrice()
+                if (not(symbol_today_price is None) and (symbol_today_price > price_threshold)):
+                    sorted_dictionary_above_threshold[symbol] = symbol_value
+        return sorted_dictionary_above_threshold

@@ -14,6 +14,7 @@ since_delta_code = 'since_crash'
 one_year_span_code = 'one_year'
 three_months_span_code = 'three_months'
 
+price_threshold = 3.0
 
 def initializeNewSymbol(symbol, symbolCollectionInstance):
     """
@@ -36,10 +37,11 @@ symbolCollectionInstance = SymbolDataCollection()
 for input_line in sys.stdin:
     input_line = input_line.strip()
 
-    symbol, price, flag = input_line.split("\t", 2)
-    
+    symbol_and_date, price, flag = input_line.split("\t", 2)
+    symbol, date = symbol_and_date.split("_", 1)
+
     price = float(price)
-    
+
     if (last_symbol != symbol):
         symbolDataInstance = initializeNewSymbol(symbol, symbolCollectionInstance)
 
@@ -74,7 +76,12 @@ sorted_symbol_price_percentage_deltas = sort_float_dictionary_ascending(symbol_p
 sorted_symbol_percentage_off_three_month_average = symbolCollectionInstance.getSortedTodayPricePercentageOffSpanAveragesByCode(three_months_span_code)
 sorted_symbol_percentage_off_year_average = symbolCollectionInstance.getSortedTodayPricePercentageOffSpanAveragesByCode(one_year_span_code)
 
+sorted_symbol_percentage_off_three_month_average_above_price_threshold = symbolCollectionInstance.getSortedDictionaryOfValuesAboveTodayPriceThreshold(sorted_symbol_percentage_off_three_month_average, price_threshold)
+sorted_symbol_percentage_off_year_average_above_price_threshold = symbolCollectionInstance.getSortedDictionaryOfValuesAboveTodayPriceThreshold(sorted_symbol_percentage_off_year_average, price_threshold)
+
 write_dictionary_to_file(sorted_symbol_price_deltas, stock_data_output_directory + 'price_deltas.csv')
 write_dictionary_to_file(sorted_symbol_price_percentage_deltas, stock_data_output_directory + 'percentage_deltas.csv')
 write_dictionary_to_file(sorted_symbol_percentage_off_three_month_average, stock_data_output_directory + 'three_month_percentage_deltas.csv')
+write_dictionary_to_file(sorted_symbol_percentage_off_three_month_average_above_price_threshold, stock_data_output_directory + 'three_month_percentage_deltas_above_threshold.csv')
 write_dictionary_to_file(sorted_symbol_percentage_off_year_average, stock_data_output_directory + 'one_year_percentage_deltas.csv')
+write_dictionary_to_file(sorted_symbol_percentage_off_year_average_above_price_threshold, stock_data_output_directory + 'one_year_percentage_deltas_above_threshold.csv')

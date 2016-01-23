@@ -38,10 +38,10 @@ for line in sys.stdin:
     
     if (data_date != 'Date'):
         if(data_date == today_date):
-            print('{0}\t{1}\t{2}'.format(data_symbol, data_price, 'today') )
+            print('{0}_{1}\t{2}\t{3}'.format(data_symbol, data_date, data_price, 'today') )
         elif (data_date == date_to_track_from):
-            print('{0}\t{1}\t{2}'.format(data_symbol, data_price, 'since_crash') )
+            print('{0}_{1}\t{2}\t{3}'.format(data_symbol, data_date, data_price, 'since_crash') )
         elif(data_date > three_months_ago):
-            print('{0}\t{1}\t{2}'.format(data_symbol, data_price, 'three_months') )
+            print('{0}_{1}\t{2}\t{3}'.format(data_symbol, data_date, data_price, 'three_months') )
         elif(data_date > one_year_ago):
-            print('{0}\t{1}\t{2}'.format(data_symbol, data_price, 'one_year') )
+            print('{0}_{1}\t{2}\t{3}'.format(data_symbol, data_date, data_price, 'one_year') )
