@@ -40,7 +40,7 @@ for line in sys.stdin:
         if(data_date == today_date):
             print('{0}\t{1}\t{2}'.format(data_symbol, data_price, 'today') )
         elif (data_date == date_to_track_from):
-            print('{0}\t{1}\t{2}'.format(data_symbol, data_price, 'since') )
+            print('{0}\t{1}\t{2}'.format(data_symbol, data_price, 'since_crash') )
         elif(data_date > three_months_ago):
             print('{0}\t{1}\t{2}'.format(data_symbol, data_price, 'three_months') )
         elif(data_date > one_year_ago):

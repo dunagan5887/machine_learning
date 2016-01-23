@@ -1,5 +1,7 @@
 .idea
 .ipynb_checkpoints
+*.pyc
 Untitled.ipynb
 stocks/data
+stocks/map_reduce/test_output/
 stocks/backup
