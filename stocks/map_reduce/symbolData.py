@@ -1,5 +1,6 @@
 from dunagan_utility import sort_float_dictionary_ascending
 from collections import OrderedDict
+from span import Span
 
 class SymbolData:
     
@@ -18,12 +19,12 @@ class SymbolData:
     def getTodayPrice(self):
         return self.today_price
 
-    def initializeSpanByCode(self, code):
-        self.spans[code] = []
+    def initializeSpanByCode(self, span_code):
+        self.spans[span_code] = Span(span_code)
         return self
 
-    def addSpanValueByCode(self, code, price):
-        self.spans[code].append(price)
+    def addSpanValueByCode(self, span_code, unit_code, close_price = None, open_price = None, high_price = None, low_price = None, delta = None, delta_percentage = None):
+        self.spans[span_code].addSpanUnit(unit_code, close_price, open_price, high_price, low_price, delta, delta_percentage)
         return self
 
     def getPercentageDeltaOffSpanAverage(self, span_code, price_to_compare):
@@ -34,14 +35,13 @@ class SymbolData:
         delta_percentage = delta / span_average
         return delta_percentage
 
-    def getSpanAverageByCode(self, code):
-        span = self.spans[code]
-        span_count = len(span)
-        if span_count == 0:
-            return None
-        span_sum = float(sum(span))
-        span_average = span_sum / span_count
-        return span_average
+    def getSpanAverageByCode(self, span_code):
+        span = self.spans[span_code]
+        return span.getSpanCloseAverage()
+
+    def getSpanDeltaByCode(self, span_code):
+        span = self.spans[span_code]
+        return span.getSpanDelta()
 
     def initializeDeltaByCode(self, code):
         self.deltas[code] = 0.0

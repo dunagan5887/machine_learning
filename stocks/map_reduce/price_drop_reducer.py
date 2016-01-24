@@ -29,10 +29,11 @@ def initializeNewSymbol(symbol, symbolCollectionInstance):
 
 
 last_symbol = None
+last_price = None
 symbolCollectionInstance = SymbolDataCollection()
 
 # -----------------------------------
-# Loop through incoming data lines
+# BEGIN: Loop through incoming data lines
 #  --------------------------------
 for input_line in sys.stdin:
     input_line = input_line.strip()
@@ -44,6 +45,12 @@ for input_line in sys.stdin:
 
     if (last_symbol != symbol):
         symbolDataInstance = initializeNewSymbol(symbol, symbolCollectionInstance)
+        last_price = None
+
+    if not(last_price is None):
+        delta = price - last_price
+        percentage_delta = delta / last_price
+
 
     if flag == one_year_span_code:
         symbolDataInstance.addSpanValueByCode(one_year_span_code, price)
@@ -61,6 +68,14 @@ for input_line in sys.stdin:
         symbolDataInstance.addSpanValueByCode(three_months_span_code, price)
 
     last_symbol = symbol
+    last_price = price
+# -----------------------------------
+# END: Loop through incoming data lines
+#  --------------------------------
+
+
+
+
 
 
 sorted_symbol_price_deltas = symbolCollectionInstance.getSortedDeltaValuesByCode(since_delta_code)

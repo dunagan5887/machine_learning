@@ -55,14 +55,32 @@ class TestSymbolData(unittest.TestCase):
         self.assertIsNone(first_expected_none_value, 'A None value was not returned when getting the average of a span with no values')
         second_expected_none_value = testSymbolData.getPercentageDeltaOffSpanAverage(span_code, off_average_value_to_test)
         self.assertIsNone(second_expected_none_value, 'A None value was not returned when getting the percentage delta off average of a span with no values')
+        unit_code = 0
         for value in span_to_test:
-            testSymbolData.addSpanValueByCode(span_code, value)
+            testSymbolData.addSpanValueByCode(span_code, unit_code, value)
+            unit_code += 1
         span_test_average = testSymbolData.getSpanAverageByCode(span_code)
         self.assertEqual(span_expected_average, span_test_average, 'The computed average for a test span for a test SymbolData object was expected to be {0} but was {1}'.format(span_expected_average, span_test_average))
         expected_delta_off_average = 0.0486891385768
         test_delta_off_average = testSymbolData.getPercentageDeltaOffSpanAverage(span_code, off_average_value_to_test)
         test_delta_off_average = round(test_delta_off_average, 13)
         self.assertEqual(expected_delta_off_average, test_delta_off_average, 'The computed delta percentage off average for a test SymbolData object was expected to be {0} but was {1}'.format(expected_delta_off_average, test_delta_off_average))
+
+    def test_getSpanDeltaByCode(self):
+        testSymbolData = SymbolData('A')
+        span_code = 'test_span'
+        testSymbolData.initializeSpanByCode(span_code)
+        span_to_test = [[1.34, 1.10], [5.6, 1.0], [-3.5, 5.6], [-0.3, -3.5], [2.34, -0.3]]
+        unit_code = 0
+        for unit_data in span_to_test:
+            close_price = unit_data[0]
+            open_price = unit_data[1]
+            testSymbolData.addSpanValueByCode(span_code, unit_code, close_price, open_price)
+            unit_code += 1
+        expected_span_delta = 1.24
+        test_span_delta = testSymbolData.getSpanDeltaByCode(span_code)
+        test_span_delta = round(test_span_delta, 2)
+        self.assertEqual(expected_span_delta, test_span_delta)
 
 class TestSymbolDataCollection(unittest.TestCase):
     def test_isSymbolInCollection(self):
@@ -115,18 +133,24 @@ class TestSymbolDataCollection(unittest.TestCase):
         firstSymbolData = testCollection.addSymbolToCollection('A')
         firstSymbolData.setTodayPrice(first_today_price)
         firstSymbolData.initializeSpanByCode(test_span_code)
+        unit_code = 0
         for price in first_span_prices:
-            firstSymbolData.addSpanValueByCode(test_span_code, price)
+            firstSymbolData.addSpanValueByCode(test_span_code, unit_code, price)
+            unit_code += 1
         secondSymbolData = testCollection.addSymbolToCollection('B')
         secondSymbolData.initializeSpanByCode(test_span_code)
         secondSymbolData.setTodayPrice(second_today_price)
+        unit_code = 0
         for price in second_span_prices:
-            secondSymbolData.addSpanValueByCode(test_span_code, price)
+            secondSymbolData.addSpanValueByCode(test_span_code, unit_code, price)
+            unit_code += 1
         thirdSymbolData = testCollection.addSymbolToCollection('C')
         thirdSymbolData.initializeSpanByCode(test_span_code)
         thirdSymbolData.setTodayPrice(third_today_price)
+        unit_code = 0
         for price in third_span_prices:
-            thirdSymbolData.addSpanValueByCode(test_span_code, price)
+            thirdSymbolData.addSpanValueByCode(test_span_code, unit_code, price)
+            unit_code += 1
 
         testNoneSymbolData = testCollection.addSymbolToCollection('D')
         testNoneSymbolData.initializeSpanByCode(test_span_code)
