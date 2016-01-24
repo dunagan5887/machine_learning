@@ -30,18 +30,28 @@ for line in sys.stdin:
                          #   the carriage return (by default)
     data_points = line.split(',')  #split line at blanks (by default), 
                          #   and return a list of keys
-        
+
+    # Rows of data_points have the following header:
+    #       Date,Open,High,Low,Close,Volume,Adj Close,T
+
     # If this is a header row, ignore it
     data_date = data_points[0]
-    data_price = data_points[4]
+    data_close_price = data_points[4]
+    data_open_price = data_points[1]
+    data_high_price = data_points[2]
+    data_low_price = data_points[3]
     data_symbol = data_points[7]
-    
+
     if (data_date != 'Date'):
+        flag = None
         if(data_date == today_date):
-            print('{0}_{1}\t{2}\t{3}'.format(data_symbol, data_date, data_price, 'today') )
+            flag = 'today'
         elif (data_date == date_to_track_from):
-            print('{0}_{1}\t{2}\t{3}'.format(data_symbol, data_date, data_price, 'since_crash') )
+            flag = 'since_crash'
         elif(data_date > three_months_ago):
-            print('{0}_{1}\t{2}\t{3}'.format(data_symbol, data_date, data_price, 'three_months') )
+            flag = 'three_months'
         elif(data_date > one_year_ago):
-            print('{0}_{1}\t{2}\t{3}'.format(data_symbol, data_date, data_price, 'one_year') )
+            flag = 'one_year'
+
+        if not(flag is None):
+            print( '{0}_{1}\t{2}\t{3}\t{4}\t{5}\t{6}'.format(data_symbol, data_date, data_close_price, data_open_price, data_high_price, data_low_price, flag) )

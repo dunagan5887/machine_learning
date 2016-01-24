@@ -29,7 +29,7 @@ def initializeNewSymbol(symbol, symbolCollectionInstance):
 
 
 last_symbol = None
-last_price = None
+last_close_price = None
 symbolCollectionInstance = SymbolDataCollection()
 
 # -----------------------------------
@@ -38,44 +38,45 @@ symbolCollectionInstance = SymbolDataCollection()
 for input_line in sys.stdin:
     input_line = input_line.strip()
 
-    symbol_and_date, price, flag = input_line.split("\t", 2)
+    symbol_and_date, data_close_price, data_open_price, data_high_price, data_low_price, flag = input_line.split("\t", 6)
     symbol, date = symbol_and_date.split("_", 1)
 
-    price = float(price)
+    data_close_price = float(data_close_price)
+    data_open_price = float(data_open_price)
+    data_high_price = float(data_high_price)
+    data_low_price = float(data_low_price)
 
     if (last_symbol != symbol):
         symbolDataInstance = initializeNewSymbol(symbol, symbolCollectionInstance)
-        last_price = None
+        last_close_price = None
 
-    if not(last_price is None):
-        delta = price - last_price
-        percentage_delta = delta / last_price
-
+    if not(last_close_price is None):
+        delta = data_close_price - last_close_price
+        delta_percentage = delta / last_close_price
+    else:
+        delta = None
+        delta_percentage = None
 
     if flag == one_year_span_code:
-        symbolDataInstance.addSpanValueByCode(one_year_span_code, price)
+        symbolDataInstance.addSpanValueByCode(one_year_span_code, date, data_close_price, data_open_price, data_high_price, data_low_price, delta, delta_percentage)
     elif flag == three_months_span_code:
-        symbolDataInstance.addSpanValueByCode(one_year_span_code, price)
-        symbolDataInstance.addSpanValueByCode(three_months_span_code, price)
+        symbolDataInstance.addSpanValueByCode(one_year_span_code, date, data_close_price, data_open_price, data_high_price, data_low_price, delta, delta_percentage)
+        symbolDataInstance.addSpanValueByCode(three_months_span_code, date, data_close_price, data_open_price, data_high_price, data_low_price, delta, delta_percentage)
     elif flag == since_delta_code:
-        symbolDataInstance.addSpanValueByCode(one_year_span_code, price)
-        symbolDataInstance.addSpanValueByCode(three_months_span_code, price)
-        symbolDataInstance.setDeltaBeforeByCode(since_delta_code, price)
+        symbolDataInstance.addSpanValueByCode(one_year_span_code, date, data_close_price, data_open_price, data_high_price, data_low_price, delta, delta_percentage)
+        symbolDataInstance.addSpanValueByCode(three_months_span_code, date, data_close_price, data_open_price, data_high_price, data_low_price, delta, delta_percentage)
+        symbolDataInstance.setDeltaBeforeByCode(since_delta_code, data_open_price)
     elif flag == today_code:
-        symbolDataInstance.setDeltaAfterByCode(since_delta_code, price)
-        symbolDataInstance.setTodayPrice(price)
-        symbolDataInstance.addSpanValueByCode(one_year_span_code, price)
-        symbolDataInstance.addSpanValueByCode(three_months_span_code, price)
+        symbolDataInstance.setDeltaAfterByCode(since_delta_code, data_close_price)
+        symbolDataInstance.setTodayPrice(data_close_price)
+        symbolDataInstance.addSpanValueByCode(one_year_span_code, date, data_close_price, data_open_price, data_high_price, data_low_price, delta, delta_percentage)
+        symbolDataInstance.addSpanValueByCode(three_months_span_code, date, data_close_price, data_open_price, data_high_price, data_low_price, delta, delta_percentage)
 
     last_symbol = symbol
-    last_price = price
+    last_close_price = data_close_price
 # -----------------------------------
 # END: Loop through incoming data lines
 #  --------------------------------
-
-
-
-
 
 
 sorted_symbol_price_deltas = symbolCollectionInstance.getSortedDeltaValuesByCode(since_delta_code)
