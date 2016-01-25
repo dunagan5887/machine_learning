@@ -189,24 +189,34 @@ class TestSymbolDataCollection(unittest.TestCase):
         firstSymbolData = testCollection.addSymbolToCollection('A')
         firstSymbolData.setTodayPrice(first_today_price)
         firstSymbolData.initializeSpanByCode(test_span_code)
-        unit_code = 0
+        unit_label_prefix = 'units_'
+        i = 0
         for price in first_span_prices:
-            firstSymbolData.addSpanValueByCode(test_span_code, [unit_code], price)
-            unit_code += 1
+            unit_label_suffix = 'even' if ((i % 2) == 0) else 'odd'
+            unit_label = unit_label_prefix + unit_label_suffix
+            unit_labels_list = [unit_label, i]
+            firstSymbolData.addSpanValueByCode(test_span_code, unit_labels_list, price)
+            i += 1
         secondSymbolData = testCollection.addSymbolToCollection('B')
         secondSymbolData.initializeSpanByCode(test_span_code)
         secondSymbolData.setTodayPrice(second_today_price)
-        unit_code = 0
+        i = 0
         for price in second_span_prices:
-            secondSymbolData.addSpanValueByCode(test_span_code, [unit_code], price)
-            unit_code += 1
+            unit_label_suffix = 'even' if ((i % 2) == 0) else 'odd'
+            unit_label = unit_label_prefix + unit_label_suffix
+            unit_labels_list = [unit_label, i]
+            secondSymbolData.addSpanValueByCode(test_span_code, unit_labels_list, price)
+            i += 1
         thirdSymbolData = testCollection.addSymbolToCollection('C')
         thirdSymbolData.initializeSpanByCode(test_span_code)
         thirdSymbolData.setTodayPrice(third_today_price)
-        unit_code = 0
+        i = 0
         for price in third_span_prices:
-            thirdSymbolData.addSpanValueByCode(test_span_code, [unit_code], price)
-            unit_code += 1
+            unit_label_suffix = 'even' if ((i % 2) == 0) else 'odd'
+            unit_label = unit_label_prefix + unit_label_suffix
+            unit_labels_list = [unit_label, i]
+            thirdSymbolData.addSpanValueByCode(test_span_code, unit_labels_list, price)
+            i += 1
 
         testNoneSymbolData = testCollection.addSymbolToCollection('D')
         testNoneSymbolData.initializeSpanByCode(test_span_code)
@@ -223,6 +233,31 @@ class TestSymbolDataCollection(unittest.TestCase):
         expected_price_off_average_values_by_symbol_above_threshold['A'] = -0.6905829596412556
         expected_price_off_average_values_by_symbol_above_threshold['B'] = 0.2289156626506022
         self.assertEqual(test_sorted_dictionary_of_values_above_price_threshold, expected_price_off_average_values_by_symbol_above_threshold, 'The expected_price_off_average_values_by_symbol_above_threshold was {0} but {1} was returned'.format(expected_price_off_average_values_by_symbol_above_threshold, test_sorted_dictionary_of_values_above_price_threshold))
+        # Test for even/odd unit labels
+        even_units_label = unit_label_prefix + 'even'
+        odd_units_label = unit_label_prefix + 'odd'
+        test_price_off_even_average_values_by_symbol = testCollection.getSortedTodayPricePercentageOffSpanAveragesByCode(test_span_code, even_units_label)
+        test_price_off_odd_average_values_by_symbol = testCollection.getSortedTodayPricePercentageOffSpanAveragesByCode(test_span_code, odd_units_label)
+        expected_price_off_even_average_values = OrderedDict()
+        expected_price_off_even_average_values['C'] = -0.7647058823529411
+        expected_price_off_even_average_values['A'] = -0.6567164179104478
+        expected_price_off_even_average_values['B'] = 0.21428571428571433
+        self.assertEqual(expected_price_off_even_average_values, test_price_off_even_average_values_by_symbol)
+        expected_price_off_odd_average_values = OrderedDict()
+        expected_price_off_odd_average_values['A'] = -0.7415730337078652
+        expected_price_off_odd_average_values['C'] = -0.5555555555555556
+        expected_price_off_odd_average_values['B'] = 0.25925925925925913
+        self.assertEqual(test_price_off_odd_average_values_by_symbol, expected_price_off_odd_average_values)
+        test_sorted_dictionary_of_even_values_above_price_threshold = testCollection.getSortedDictionaryOfValuesAboveTodayPriceThreshold(test_price_off_even_average_values_by_symbol, price_threshold)
+        expected_price_off_even_average_values_by_symbol_above_threshold = OrderedDict()
+        expected_price_off_even_average_values_by_symbol_above_threshold['A'] = -0.6567164179104478
+        expected_price_off_even_average_values_by_symbol_above_threshold['B'] = 0.21428571428571433
+        self.assertEqual(expected_price_off_even_average_values_by_symbol_above_threshold, test_sorted_dictionary_of_even_values_above_price_threshold)
+        test_sorted_dictionary_of_odd_values_above_price_threshold = testCollection.getSortedDictionaryOfValuesAboveTodayPriceThreshold(test_price_off_odd_average_values_by_symbol, price_threshold)
+        expected_price_off_odd_average_values_by_symbol_above_threshold = OrderedDict()
+        expected_price_off_odd_average_values_by_symbol_above_threshold['A'] = -0.7415730337078652
+        expected_price_off_odd_average_values_by_symbol_above_threshold['B'] = 0.25925925925925913
+        self.assertEqual(expected_price_off_odd_average_values_by_symbol_above_threshold, test_sorted_dictionary_of_odd_values_above_price_threshold)
 
 if __name__ == '__main__':
     unittest.main()
