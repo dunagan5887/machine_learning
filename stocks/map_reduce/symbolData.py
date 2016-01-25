@@ -23,25 +23,25 @@ class SymbolData:
         self.spans[span_code] = Span(span_code)
         return self
 
-    def addSpanValueByCode(self, span_code, unit_code, close_price = None, open_price = None, high_price = None, low_price = None, delta = None, delta_percentage = None):
-        self.spans[span_code].addSpanUnit(unit_code, close_price, open_price, high_price, low_price, delta, delta_percentage)
+    def addSpanValueByCode(self, span_code, unit_labels, close_price = None, open_price = None, high_price = None, low_price = None, delta = None, delta_percentage = None):
+        self.spans[span_code].addSpanUnit(unit_labels, close_price, open_price, high_price, low_price, delta, delta_percentage)
         return self
 
-    def getPercentageDeltaOffSpanAverage(self, span_code, price_to_compare):
-        span_average = self.getSpanAverageByCode(span_code)
+    def getPercentageDeltaOffSpanAverage(self, span_code, price_to_compare, units_code = None):
+        span_average = self.getSpanAverageByCode(span_code, units_code)
         if span_average is None:
             return None
         delta = price_to_compare - span_average
         delta_percentage = delta / span_average
         return delta_percentage
 
-    def getSpanAverageByCode(self, span_code):
+    def getSpanAverageByCode(self, span_code, units_code = None):
         span = self.spans[span_code]
-        return span.getSpanCloseAverage()
+        return span.getSpanCloseAverage(units_code)
 
-    def getSpanDeltaByCode(self, span_code):
+    def getSpanDeltaByCode(self, span_code, units_code = None):
         span = self.spans[span_code]
-        return span.getSpanDelta()
+        return span.getSpanDelta(units_code)
 
     def initializeDeltaByCode(self, code):
         self.deltas[code] = 0.0
@@ -110,14 +110,15 @@ class SymbolDataCollection:
         sorted_delta_value_symbols_dictionary = sort_float_dictionary_ascending(delta_values_by_symbol)
         return sorted_delta_value_symbols_dictionary
 
-    def getSortedTodayPricePercentageOffSpanAveragesByCode(self, span_code):
+    def getSortedTodayPricePercentageOffSpanAveragesByCode(self, span_code, units_label = None):
         """
         :param string span_code:
+        :param string|None units_label:
         :return: OrderedDict
         """
         span_today_price_off_average_values_by_symbol = {}
         for symbol, symbolDataInstance in self.symbols_dict.items(): # type: SymbolData
-            symbol_average_for_span = symbolDataInstance.getSpanAverageByCode(span_code)
+            symbol_average_for_span = symbolDataInstance.getSpanAverageByCode(span_code, units_label)
             today_price_for_symbol = symbolDataInstance.getTodayPrice()
             if ((symbol_average_for_span is None) or (today_price_for_symbol is None)):
                 continue

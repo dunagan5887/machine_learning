@@ -31,20 +31,36 @@ class Span:
 
         return dict_of_span_units
 
-    def getSpanDelta(self):
+    def getSpanDelta(self, units_label = None):
+        if not(units_label is None):
+            span_units_for_label = self.getSpanUnitsByLabel(units_label)
+            if span_units_for_label is None:
+                return None
+            units_for_delta = span_units_for_label
+        else:
+            units_for_delta = self.units
+
         if len(self.units) == 0:
             return None
-        firstUnit = self.units.items()[0][1]
-        lastUnit = self.units.items()[-1][1]
+        firstUnit = units_for_delta.items()[0][1]
+        lastUnit = units_for_delta.items()[-1][1]
         open_price = firstUnit.open_price
         close_price = lastUnit.close_price
         if (not(open_price is None) and not(close_price is None)):
             return close_price - open_price
         return None
 
-    def getSpanCloseAverage(self):
+    def getSpanCloseAverage(self, units_label = None):
         list_of_close_prices = []
-        for unit_code, SpanUnitObject in self.units.iteritems():
+        if not(units_label is None):
+            span_units_for_label = self.getSpanUnitsByLabel(units_label)
+            if span_units_for_label is None:
+                return None
+            units_to_iterate_over = span_units_for_label.iteritems()
+        else:
+            units_to_iterate_over = self.units.iteritems()
+
+        for unit_code, SpanUnitObject in units_to_iterate_over:
             close_price = SpanUnitObject.close_price
             if not(close_price is None):
                 list_of_close_prices.append(close_price)
