@@ -160,23 +160,6 @@ class TestSymbolDataCollection(unittest.TestCase):
         sorted_delta_values_by_code_dict = newCollection.getSortedDeltaValuesByCode(delta_code)
         self.assertEqual(expected_sorted_by_delta_dict, sorted_delta_values_by_code_dict, 'test_getSortedDeltaValuesByCode failed to return the expected sorted dictionary, returned {0}\nexpected: {1}'.format(sorted_delta_values_by_code_dict, expected_sorted_by_delta_dict))
 
-
-
-
-
-
-
-    # Need to test the following method with unit_labels
-
-
-
-
-
-
-
-
-
-
     def test_getSortedTodayPricePercentageOffSpanAveragesByCode(self):
         test_span_code = 'percentage_price_off_span_average_test'
         testCollection = SymbolDataCollection()
