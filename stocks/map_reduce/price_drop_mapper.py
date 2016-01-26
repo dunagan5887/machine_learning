@@ -46,7 +46,7 @@ for line in sys.stdin:
         flag = None
         if(data_date == today_date):
             flag = 'today'
-        elif (data_date == date_to_track_from):
+        elif (data_date > date_to_track_from):
             flag = 'since_crash'
         elif(data_date > three_months_ago):
             flag = 'three_months'

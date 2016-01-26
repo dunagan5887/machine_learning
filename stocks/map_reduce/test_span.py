@@ -104,9 +104,26 @@ class TestSpan(unittest.TestCase):
         self.assertEqual(expected_third_unit_delta_percentage, testSpanTwoSecondUnit.delta_percentage)
         test_close_price_average = testSpan.getSpanCloseAverage()
         self.assertEqual(expected_close_price_average, test_close_price_average)
+        # Test Span Deltas
         expected_span_delta = -12.0
         test_span_delta = testSpan.getSpanDelta()
         self.assertEqual(expected_span_delta, test_span_delta)
+        expected_span_delta_percentage = expected_span_delta / expected_first_unit_open_price
+        test_span_delta_percentage = testSpan.getSpanDelta(get_percentage_delta = True)
+        self.assertEqual(expected_span_delta_percentage, test_span_delta_percentage)
+        # Test Span Deltas with unit label
+        test_span_test_two_label_delta = testSpan.getSpanDelta(span_test_two_label)
+        expected_span_test_two_label_delta = -7.0
+        self.assertEqual(expected_span_test_two_label_delta, test_span_test_two_label_delta)
+        test_span_test_two_label_delta_percentage = round(testSpan.getSpanDelta(span_test_two_label, get_percentage_delta = True), 6)
+        expected_span_test_two_label_delta_percentage = round(expected_span_test_two_label_delta / expected_second_unit_open_price, 6)
+        self.assertEqual(expected_span_test_two_label_delta_percentage, test_span_test_two_label_delta_percentage)
+        test_span_test_one_label_delta = testSpan.getSpanDelta(span_test_one_label)
+        expected_span_test_one_label_delta = -7.0
+        self.assertEqual(expected_span_test_one_label_delta, test_span_test_one_label_delta)
+        test_span_test_one_label_delta_percentage = round(testSpan.getSpanDelta(span_test_one_label, get_percentage_delta = True), 6)
+        expected_span_test_one_label_delta_percentage = round(expected_span_test_one_label_delta / expected_first_unit_open_price, 6)
+        self.assertEqual(expected_span_test_one_label_delta_percentage, test_span_test_one_label_delta_percentage)
 
 if __name__ == '__main__':
     unittest.main()

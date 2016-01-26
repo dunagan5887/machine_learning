@@ -83,6 +83,9 @@ class TestSymbolData(unittest.TestCase):
         test_span_delta = testSymbolData.getSpanDeltaByCode(span_code)
         test_span_delta = round(test_span_delta, 2)
         self.assertEqual(expected_span_delta, test_span_delta)
+        expected_span_delta_percentage = round(expected_span_delta / 1.10, 6)
+        test_span_delta_percentage = round(testSymbolData.getSpanDeltaByCode(span_code, get_percentage = True), 6)
+        self.assertEqual(expected_span_delta_percentage, test_span_delta_percentage)
         # Test the even/odd span deltas
         even_units_label = unit_label_prefix + 'even'
         odd_units_label = unit_label_prefix + 'odd'
@@ -94,6 +97,12 @@ class TestSymbolData(unittest.TestCase):
         test_odd_units_delta = round(test_odd_units_delta, 2)
         self.assertEqual(expected_even_units_delta, test_even_units_delta)
         self.assertEqual(expected_odd_units_delta, test_odd_units_delta)
+        test_even_units_delta_percentage = round(testSymbolData.getSpanDeltaByCode(span_code, even_units_label, get_percentage = True), 6)
+        expected_even_units_delta_percentage = round(expected_even_units_delta / 1.10, 6)
+        self.assertEqual(expected_even_units_delta_percentage, test_even_units_delta_percentage)
+        test_odd_units_delta_percentage = round(testSymbolData.getSpanDeltaByCode(span_code, odd_units_label, get_percentage = True), 6)
+        expected_even_units_delta_percentage = round(expected_odd_units_delta / 1.0, 6)
+        self.assertEqual(expected_even_units_delta_percentage, test_odd_units_delta_percentage)
 
 class TestSymbolDataCollection(unittest.TestCase):
     def test_isSymbolInCollection(self):
@@ -120,6 +129,11 @@ class TestSymbolDataCollection(unittest.TestCase):
         expected_sorted_by_delta_dict['C'] = -3.5
         expected_sorted_by_delta_dict['A'] = 0.9
         expected_sorted_by_delta_dict['D'] = 13.0
+        expected_sorted_by_delta_percentages_dict = OrderedDict()
+        expected_sorted_by_delta_percentages_dict['B'] = -15.166666666666666
+        expected_sorted_by_delta_percentages_dict['C'] = -0.6140350877192983
+        expected_sorted_by_delta_percentages_dict['A'] = 1.5
+        expected_sorted_by_delta_percentages_dict['D'] = 1.5116279069767442
         span_code = 'test_sorted_span_deltas'
         test_unit_label_list = ['test_unit_code']
         other_unit_label_list = ['some_other_label']
@@ -149,6 +163,9 @@ class TestSymbolDataCollection(unittest.TestCase):
         testOtherLabelOnlySymbolData.addSpanValueByCode(span_code, other_unit_label_list, 3.4, 5.9)
         sorted_span_delta_values_by_code_dict = newCollection.getSortedSpanDeltaValuesByCode(span_code, 'test_unit_code')
         self.assertEqual(expected_sorted_by_delta_dict, sorted_span_delta_values_by_code_dict, 'test_getSortedDeltaValuesByCode failed to return the expected sorted dictionary, returned {0}\nexpected: {1}'.format(sorted_span_delta_values_by_code_dict, expected_sorted_by_delta_dict))
+        # Test delta percentages
+        sorted_span_delta_percentage_values_by_code_dict = newCollection.getSortedSpanDeltaValuesByCode(span_code, 'test_unit_code', get_percentages = True)
+        self.assertEqual(expected_sorted_by_delta_percentages_dict, sorted_span_delta_percentage_values_by_code_dict)
 
     def test_getSortedTodayPricePercentageOffSpanAveragesByCode(self):
         test_span_code = 'percentage_price_off_span_average_test'
@@ -193,17 +210,21 @@ class TestSymbolDataCollection(unittest.TestCase):
 
         testNoneSymbolData = testCollection.addSymbolToCollection('D')
         testNoneSymbolData.initializeSpanByCode(test_span_code)
+        testNoneSymbolData.addSpanValueByCode(test_span_code, 'irrelevant_label', 12.3)
+        testNoneSymbolData.setTodayPrice(13.3)
 
         test_price_off_average_values_by_symbol = testCollection.getSortedTodayPricePercentageOffSpanAveragesByCode(test_span_code)
         expected_price_off_average_values_by_symbol = OrderedDict()
         expected_price_off_average_values_by_symbol['C'] = -0.7209302325581395
         expected_price_off_average_values_by_symbol['A'] = -0.6905829596412556
+        expected_price_off_average_values_by_symbol['D'] = 0.08130081300813008
         expected_price_off_average_values_by_symbol['B'] = 0.2289156626506022
         self.assertEqual(test_price_off_average_values_by_symbol, expected_price_off_average_values_by_symbol, 'The expected_price_off_average_values_by_symbol was {0}, but {1} was returned while testing getting the percentage delta of today price off of span average'.format(expected_price_off_average_values_by_symbol, test_price_off_average_values_by_symbol))
         price_threshold = 2.0
         test_sorted_dictionary_of_values_above_price_threshold = testCollection.getSortedDictionaryOfValuesAboveTodayPriceThreshold(test_price_off_average_values_by_symbol, price_threshold)
         expected_price_off_average_values_by_symbol_above_threshold = OrderedDict()
         expected_price_off_average_values_by_symbol_above_threshold['A'] = -0.6905829596412556
+        expected_price_off_average_values_by_symbol_above_threshold['D'] = 0.08130081300813008
         expected_price_off_average_values_by_symbol_above_threshold['B'] = 0.2289156626506022
         self.assertEqual(test_sorted_dictionary_of_values_above_price_threshold, expected_price_off_average_values_by_symbol_above_threshold, 'The expected_price_off_average_values_by_symbol_above_threshold was {0} but {1} was returned'.format(expected_price_off_average_values_by_symbol_above_threshold, test_sorted_dictionary_of_values_above_price_threshold))
         # Test for even/odd unit labels

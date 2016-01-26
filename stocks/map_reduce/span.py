@@ -32,7 +32,7 @@ class Span:
 
         return dict_of_span_units
 
-    def getSpanDelta(self, units_label = None):
+    def getSpanDelta(self, units_label = None, get_percentage_delta = False):
         if not(units_label is None):
             span_units_for_label = self.getSpanUnitsByLabel(units_label)
             if span_units_for_label is None:
@@ -48,7 +48,8 @@ class Span:
         open_price = firstUnit.open_price
         close_price = lastUnit.close_price
         if (not(open_price is None) and not(close_price is None)):
-            return close_price - open_price
+            delta = close_price - open_price
+            return delta if not(get_percentage_delta) else (delta / abs(open_price))
         return None
 
     def getSpanCloseAverage(self, units_label = None):

@@ -36,9 +36,9 @@ class SymbolData:
         span = self.spans[span_code]
         return span.getSpanCloseAverage(units_code)
 
-    def getSpanDeltaByCode(self, span_code, units_code = None):
+    def getSpanDeltaByCode(self, span_code, units_code = None, get_percentage = False):
         span = self.spans[span_code]
-        return span.getSpanDelta(units_code)
+        return span.getSpanDelta(units_code, get_percentage)
 
 class SymbolDataCollection:
     
@@ -66,15 +66,16 @@ class SymbolDataCollection:
             return self.symbols_dict[symbol]
         return None
 
-    def getSortedSpanDeltaValuesByCode(self, span_code, unit_code = None):
+    def getSortedSpanDeltaValuesByCode(self, span_code, unit_code = None, get_percentages = False):
         """
         :param string delta_code:
         :param string|None unit_code:
+        :param bool get_percentages:
         :return: OrderedDict
         """
         delta_values_by_symbol = {}
         for symbol, symbolDataInstance in self.symbols_dict.items():  # type: SymbolData
-            symbol_span_unit_delta_value = symbolDataInstance.getSpanDeltaByCode(span_code, unit_code)
+            symbol_span_unit_delta_value = symbolDataInstance.getSpanDeltaByCode(span_code, unit_code, get_percentages)
             if not(symbol_span_unit_delta_value is None):
                 delta_values_by_symbol[symbol] = symbol_span_unit_delta_value
         sorted_delta_value_symbols_dictionary = sort_float_dictionary_ascending(delta_values_by_symbol)
