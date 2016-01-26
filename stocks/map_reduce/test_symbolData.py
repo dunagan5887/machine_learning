@@ -18,32 +18,6 @@ class TestSymbolData(unittest.TestCase):
         test_today_price = symbolDataTest.getTodayPrice()
         self.assertEqual(expected_today_price, test_today_price, 'A SymbolData object did not return the expected value when calling getTodayPrice(), expected {0} but returned {1}'.format(expected_today_price, test_today_price))
 
-    def test_getDeltaByCode(self):
-        testSymbolData = SymbolData('A')
-        expected_before_delta = 4.5
-        expected_after_delta = 3.2
-        expected_delta = -1.3
-        delta_code = 'test_delta'
-        testSymbolData.initializeDeltaByCode(delta_code)
-        testSymbolData.setDeltaBeforeByCode(delta_code, expected_before_delta)
-        testSymbolData.setDeltaAfterByCode(delta_code, expected_after_delta)
-        test_delta = testSymbolData.getDeltaByCode(delta_code)
-        test_delta = round(test_delta,1)
-        self.assertEqual(expected_delta, test_delta, 'The computed delta for a test SymbolData object was expected to be {0} but was {1}'.format(expected_delta, test_delta))
-        test_before_delta = testSymbolData.getDeltaBeforeByCode(delta_code)
-        self.assertEqual(expected_before_delta, test_before_delta, 'The delta before value returned from a test SymbolData object was expected to be {0} but instead was {1}'.format(expected_before_delta, test_before_delta))
-        test_after_delta = testSymbolData.getDeltaAfterByCode(delta_code)
-        self.assertEqual(expected_after_delta, test_after_delta, 'The delta after value returned from a test SymbolData object was expected to be {0} but was instead {1}'.format(expected_after_delta, test_after_delta))
-        incomplete_delta_code = 'incomplete_delta'
-        testSymbolData.initializeDeltaByCode(incomplete_delta_code)
-        first_expected_false_value = testSymbolData.getDeltaAfterByCode(incomplete_delta_code)
-        self.assertFalse(first_expected_false_value, 'A value of False was not returned for a delta after valuw which was never declared, instead {0} was returned'.format(first_expected_false_value))
-        testSymbolData.setDeltaAfterByCode(incomplete_delta_code, expected_after_delta)
-        expected_none_value = testSymbolData.getDeltaByCode(incomplete_delta_code)
-        self.assertIsNone(expected_none_value, 'A value of None was not returned for a delta value which was incomplete, the returned value was {0}'.format(expected_none_value))
-        second_expected_false_value = testSymbolData.getDeltaBeforeByCode(incomplete_delta_code)
-        self.assertFalse(second_expected_false_value, 'A value of False was not returned for a delta before value which was never declared, {0} was returned'.format(second_expected_false_value))
-
     def test_getSpanAverageByCode_and_getPercentageDeltaOffSpanAverage(self):
         testSymbolData = SymbolData('A')
         span_to_test = [1.34, 5.6, -3.5, -0.3, 2.2]
@@ -140,25 +114,41 @@ class TestSymbolDataCollection(unittest.TestCase):
         other_symbol_from_data = otherSymbolData.symbol
         self.assertEqual(other_symbol_from_data, other_expected_symbol, 'The symbol {0} from another SymbolData object returned from a SymbolDataCollection did not match the other symbol passed into newCollection.getSymbolData() {1}'.format(other_symbol_from_data, other_expected_symbol))
 
-    def test_getSortedDeltaValuesByCode(self):
-        unsorted_dict = {'A': [1.0, 0.6], 'B': [-4.0, 0.6], 'C': [1.2, 5.7], 'D': [4.0, -8.6]}
+    def test_getSortedSpanDeltaValuesByCode(self):
         expected_sorted_by_delta_dict = OrderedDict()
-        expected_sorted_by_delta_dict['D'] = -12.6
-        expected_sorted_by_delta_dict['A'] = -0.4
-        expected_sorted_by_delta_dict['C'] = 4.5
-        expected_sorted_by_delta_dict['B'] = 4.6
-        delta_code = 'test_sorted_deltas'
+        expected_sorted_by_delta_dict['B'] = -9.1
+        expected_sorted_by_delta_dict['C'] = -3.5
+        expected_sorted_by_delta_dict['A'] = 0.9
+        expected_sorted_by_delta_dict['D'] = 13.0
+        span_code = 'test_sorted_span_deltas'
+        test_unit_label_list = ['test_unit_code']
+        other_unit_label_list = ['some_other_label']
         newCollection = SymbolDataCollection()
-        for symbol, delta_before_and_after_list in unsorted_dict.items():
-            testSymbolData = newCollection.addSymbolToCollection(symbol)
-            testSymbolData.initializeDeltaByCode(delta_code)
-            testSymbolData.setDeltaBeforeByCode(delta_code, delta_before_and_after_list[0])
-            testSymbolData.setDeltaAfterByCode(delta_code, delta_before_and_after_list[1])
-        testNoBeforeValueSymbolData = newCollection.addSymbolToCollection('E')
-        testNoBeforeValueSymbolData.initializeDeltaByCode(delta_code)
-        testNoBeforeValueSymbolData.setDeltaAfterByCode(delta_code, 6.6)
-        sorted_delta_values_by_code_dict = newCollection.getSortedDeltaValuesByCode(delta_code)
-        self.assertEqual(expected_sorted_by_delta_dict, sorted_delta_values_by_code_dict, 'test_getSortedDeltaValuesByCode failed to return the expected sorted dictionary, returned {0}\nexpected: {1}'.format(sorted_delta_values_by_code_dict, expected_sorted_by_delta_dict))
+        testSymbolDataA = newCollection.addSymbolToCollection('A')
+        testSymbolDataA.initializeSpanByCode(span_code)
+        testSymbolDataA.addSpanValueByCode(span_code, test_unit_label_list, 1.0, 0.6)
+        testSymbolDataA.addSpanValueByCode(span_code, test_unit_label_list, 1.5, 1.0)
+        testSymbolDataA.addSpanValueByCode(span_code, other_unit_label_list, 1.4, 1.5)
+        testSymbolDataB = newCollection.addSymbolToCollection('B')
+        testSymbolDataB.initializeSpanByCode(span_code)
+        testSymbolDataB.addSpanValueByCode(span_code, test_unit_label_list, -4.0, 0.6)
+        testSymbolDataB.addSpanValueByCode(span_code, test_unit_label_list, -8.5, 4.0)
+        testSymbolDataB.addSpanValueByCode(span_code, other_unit_label_list, 4.5, -8.5)
+        testSymbolDataC = newCollection.addSymbolToCollection('C')
+        testSymbolDataC.initializeSpanByCode(span_code)
+        testSymbolDataC.addSpanValueByCode(span_code, test_unit_label_list, 1.2, 5.7)
+        testSymbolDataC.addSpanValueByCode(span_code, test_unit_label_list, 2.2, 1.2)
+        testSymbolDataC.addSpanValueByCode(span_code, other_unit_label_list, 1.2, 2.2)
+        testSymbolDataD = newCollection.addSymbolToCollection('D')
+        testSymbolDataD.initializeSpanByCode(span_code)
+        testSymbolDataD.addSpanValueByCode(span_code, test_unit_label_list, 4.0, -8.6)
+        testSymbolDataD.addSpanValueByCode(span_code, test_unit_label_list, 4.4, 4.0)
+        testSymbolDataD.addSpanValueByCode(span_code, other_unit_label_list, 2.3, 4.4)
+        testOtherLabelOnlySymbolData = newCollection.addSymbolToCollection('E')
+        testOtherLabelOnlySymbolData.initializeSpanByCode(span_code)
+        testOtherLabelOnlySymbolData.addSpanValueByCode(span_code, other_unit_label_list, 3.4, 5.9)
+        sorted_span_delta_values_by_code_dict = newCollection.getSortedSpanDeltaValuesByCode(span_code, 'test_unit_code')
+        self.assertEqual(expected_sorted_by_delta_dict, sorted_span_delta_values_by_code_dict, 'test_getSortedDeltaValuesByCode failed to return the expected sorted dictionary, returned {0}\nexpected: {1}'.format(sorted_span_delta_values_by_code_dict, expected_sorted_by_delta_dict))
 
     def test_getSortedTodayPricePercentageOffSpanAveragesByCode(self):
         test_span_code = 'percentage_price_off_span_average_test'

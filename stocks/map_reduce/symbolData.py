@@ -7,9 +7,6 @@ class SymbolData:
     def __init__(self, symbol):
         self.symbol = symbol
         self.today_price = None
-        self.deltas = {}
-        self.delta_before_value = {}
-        self.delta_after_value = {}
         self.spans = {}
 
     def setTodayPrice(self, today_price):
@@ -43,33 +40,6 @@ class SymbolData:
         span = self.spans[span_code]
         return span.getSpanDelta(units_code)
 
-    def initializeDeltaByCode(self, code):
-        self.deltas[code] = 0.0
-        self.delta_before_value[code] = False
-        self.delta_after_value[code] = False
-        return self
-
-    def setDeltaBeforeByCode(self, code, price):
-        self.deltas[code] -= price
-        self.delta_before_value[code] = price
-        return self
-
-    def getDeltaBeforeByCode(self, code):
-        return self.delta_before_value[code]
-
-    def setDeltaAfterByCode(self, code, price):
-        self.deltas[code] += price
-        self.delta_after_value[code] = price
-        return self
-
-    def getDeltaAfterByCode(self, code):
-        return self.delta_after_value[code]
-
-    def getDeltaByCode(self, code):
-        if (not((self.delta_after_value[code] is False) or (self.delta_before_value[code] is False))):
-            return self.deltas[code]
-        return None
-
 class SymbolDataCollection:
     
     def __init__(self):
@@ -80,7 +50,6 @@ class SymbolDataCollection:
     
     def addSymbolToCollection(self, symbol):
         """
-
         :param string symbol:
         :return: SymbolData
         """
@@ -97,16 +66,17 @@ class SymbolDataCollection:
             return self.symbols_dict[symbol]
         return None
 
-    def getSortedDeltaValuesByCode(self, delta_code):
+    def getSortedSpanDeltaValuesByCode(self, span_code, unit_code = None):
         """
         :param string delta_code:
+        :param string|None unit_code:
         :return: OrderedDict
         """
         delta_values_by_symbol = {}
-        for symbol, symbolDataInstance in self.symbols_dict.items(): # type: SymbolData
-            symbol_delta_value = symbolDataInstance.getDeltaByCode(delta_code)
-            if not(symbol_delta_value is None):
-                delta_values_by_symbol[symbol] = symbol_delta_value
+        for symbol, symbolDataInstance in self.symbols_dict.items():  # type: SymbolData
+            symbol_span_unit_delta_value = symbolDataInstance.getSpanDeltaByCode(span_code, unit_code)
+            if not(symbol_span_unit_delta_value is None):
+                delta_values_by_symbol[symbol] = symbol_span_unit_delta_value
         sorted_delta_value_symbols_dictionary = sort_float_dictionary_ascending(delta_values_by_symbol)
         return sorted_delta_value_symbols_dictionary
 
