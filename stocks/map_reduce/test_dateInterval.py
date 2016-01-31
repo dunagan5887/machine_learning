@@ -1,6 +1,8 @@
 import unittest
 from dateInterval import DateInterval
 from dateInterval import DateIntervalDictionary
+from dateInterval import DateIntervalFactory
+from collections import OrderedDict
 
 
 class TestDateInterval(unittest.TestCase):
@@ -63,6 +65,10 @@ class TestDateIntervalDictionary(unittest.TestCase):
         self.dateIntervalDictionaryInstance.addDateInterval(self.dateIntervalOne)
         self.dateIntervalDictionaryInstance.addDateInterval(self.dateIntervalTwo)
         self.dateIntervalDictionaryInstance.addDateInterval(self.dateIntervalThree)
+        self.interval_code_four = 'unit_test_four'
+        self.start_date_four = '2016-01-31'
+        self.end_date_four = '2016-02-15'
+        self.dateIntervalDictionaryInstance.addDateIntervalByDates(self.start_date_four, self.end_date_four, self.interval_code_four)
 
     def test_init(self):
         test_code = self.dateIntervalDictionaryInstance.dictionary_code
@@ -70,9 +76,13 @@ class TestDateIntervalDictionary(unittest.TestCase):
 
     def test_addDateInterval(self):
         dictionary_length = len(self.dateIntervalDictionaryInstance.date_interval_dictionary)
-        self.assertEqual(dictionary_length, 3)
+        self.assertEqual(dictionary_length, 4)
 
-    def getDateIntervalByCode(self):
+    def test_addDateIntervalByDates(self):
+        testDateIntervalFour = self.dateIntervalDictionaryInstance.getDateIntervalByCode(self.interval_code_four)
+        self.assertEqual(testDateIntervalFour.code, self.interval_code_four)
+
+    def test_getDateIntervalByCode(self):
         testDateIntervalTwo = self.dateIntervalDictionaryInstance.getDateIntervalByCode(self.interval_code_two)
         self.assertIsNotNone(testDateIntervalTwo)
         self.assertEqual(self.interval_start_two, testDateIntervalTwo.start_date)
@@ -101,6 +111,96 @@ class TestDateIntervalDictionary(unittest.TestCase):
             self.assertEqual(test_list_of_codes, interval_three_code_list, 'Failed for date {0}'.format(date_string))
         test_interval_one_and_two_list = self.dateIntervalDictionaryInstance.getIntervalCodesByDate(date_in_intervals_one_and_two)
         self.assertEqual(test_interval_one_and_two_list, expected_interval_one_and_two_list)
+        test_interval_four_dates = ['2016-01-31', '2016-02-02', '2016-02-15']
+        interval_four_code_list = [self.interval_code_four]
+        for date_string in test_interval_four_dates:
+            test_list_of_codes = self.dateIntervalDictionaryInstance.getIntervalCodesByDate(date_string)
+            self.assertEqual(test_list_of_codes, interval_four_code_list, 'Failed for date {0}'.format(date_string))
+        test_dates_in_no_intervals = ['2015-12-11', '2015-12-21', '2015-12-28', '2016-01-30', '2016-02-16']
+        for date_string in test_dates_in_no_intervals:
+            test_none = self.dateIntervalDictionaryInstance.getIntervalCodesByDate(date_string)
+            self.assertIsNone(test_none)
+
+class TestDateIntervalFactory(unittest.TestCase):
+
+    def tearDown(self):
+        self.dictionary_of_date_intervals = None
+
+    def setUp(self):
+        self.start_date = '2015-12-29'
+        self.frequency_one = 3
+        self.count_one = 4
+        self.unit_one = 'weeks'
+        self.direction = True
+        self.test_dictionary_of_date_intervals_one = DateIntervalFactory.getDateIntervalDates(self.start_date, self.frequency_one, self.count_one, self.unit_one, self.direction)
+        self.expected_interval_dates_one = OrderedDict()
+        self.expected_interval_dates_one['0-3_weeks'] = ['2015-12-29', '2015-12-08']
+        self.expected_interval_dates_one['3-6_weeks'] = ['2015-12-08', '2015-11-17']
+        self.expected_interval_dates_one['6-9_weeks'] = ['2015-11-17', '2015-10-27']
+        self.expected_interval_dates_one['9-12_weeks'] = ['2015-10-27', '2015-10-06']
+
+        self.frequency_two = 30
+        self.count_two = 3
+        self.unit_two = 'days'
+        self.test_dictionary_of_date_intervals_two = DateIntervalFactory.getDateIntervalDates(self.start_date, self.frequency_two, self.count_two, self.unit_two, self.direction)
+        self.expected_interval_dates_two = OrderedDict()
+        self.expected_interval_dates_two['0-30_days'] = ['2015-12-29', '2015-11-29']
+        self.expected_interval_dates_two['30-60_days'] = ['2015-11-29', '2015-10-30']
+        self.expected_interval_dates_two['60-90_days'] = ['2015-10-30', '2015-09-30']
+
+        self.start_date_three = '2015-12-29'
+        self.frequency_three = 21
+        self.count_three = 4
+        self.unit_three = 'days'
+        self.direction_three = False
+        self.code_three = 'test_date_interval_dictionary'
+        self.test_date_interval_dictionary = DateIntervalFactory.getDateIntervalDictionary(self.start_date, self.frequency_three, self.count_three, self.unit_three, self.direction_three, self.code_three)
+        self.test_dates_interval_three_code_one = '0-21_days'
+        self.test_dates_interval_three_code_two = '21-42_days'
+        self.test_dates_interval_three_code_three = '42-63_days'
+        self.test_dates_interval_three_code_four = '63-84_days'
+        self.expected_interval_dates_three = OrderedDict()
+        self.expected_interval_dates_three[self.test_dates_interval_three_code_one] = ['2015-12-29', '2016-01-19']
+        self.expected_interval_dates_three[self.test_dates_interval_three_code_two] = ['2016-01-19', '2016-02-09']
+        self.expected_interval_dates_three[self.test_dates_interval_three_code_three] = ['2016-02-09', '2016-03-01']
+        self.expected_interval_dates_three[self.test_dates_interval_three_code_four] = ['2016-03-01', '2016-03-22']
+        self.test_interval_one_dates_list = ['2015-12-29', '2015-12-31', '2016-01-10']
+        self.test_interval_one_and_two_dates_list = ['2016-01-19']
+        self.test_interval_two_dates_list = ['2016-01-29', '2016-02-05']
+        self.test_interval_two_and_three_dates_list = ['2016-02-09']
+        self.test_interval_three_dates_list = ['2016-02-19']
+        self.test_interval_three_and_four_dates_list = ['2016-03-01']
+        self.test_interval_four_dates_list = ['2016-03-15', '2016-03-22']
+        self.test_no_interval_list = ['2014-12-30', '2015-11-30', '2015-12-28', '2016-03-23', '2016-04-23', '2017-03-20']
+
+    def test_getDateIntervalDates(self):
+        self.assertEqual(self.expected_interval_dates_one, self.test_dictionary_of_date_intervals_one)
+        self.assertEqual(self.expected_interval_dates_two, self.test_dictionary_of_date_intervals_two)
+
+    def test_getDateIntervalDictionary(self):
+        self.assertEqual(self.code_three, self.test_date_interval_dictionary.dictionary_code)
+        for date_string in self.test_interval_one_dates_list:
+            test_list_of_codes = self.test_date_interval_dictionary.getIntervalCodesByDate(date_string)
+            self.assertEqual(test_list_of_codes, [self.test_dates_interval_three_code_one], 'Failed for date {0}'.format(date_string))
+        for date_string in self.test_interval_two_dates_list:
+            test_list_of_codes = self.test_date_interval_dictionary.getIntervalCodesByDate(date_string)
+            self.assertEqual(test_list_of_codes, [self.test_dates_interval_three_code_two], 'Failed for date {0}'.format(date_string))
+        for date_string in self.test_interval_three_dates_list:
+            test_list_of_codes = self.test_date_interval_dictionary.getIntervalCodesByDate(date_string)
+            self.assertEqual(test_list_of_codes, [self.test_dates_interval_three_code_three], 'Failed for date {0}'.format(date_string))
+        for date_string in self.test_interval_four_dates_list:
+            test_list_of_codes = self.test_date_interval_dictionary.getIntervalCodesByDate(date_string)
+            self.assertEqual(test_list_of_codes, [self.test_dates_interval_three_code_four], 'Failed for date {0}'.format(date_string))
+        for date_string in self.test_interval_one_and_two_dates_list:
+            test_list_of_codes = self.test_date_interval_dictionary.getIntervalCodesByDate(date_string)
+            self.assertEqual(test_list_of_codes, [self.test_dates_interval_three_code_one, self.test_dates_interval_three_code_two], 'Failed for date {0}'.format(date_string))
+        for date_string in self.test_interval_two_and_three_dates_list:
+            test_list_of_codes = self.test_date_interval_dictionary.getIntervalCodesByDate(date_string)
+            self.assertEqual(test_list_of_codes, [self.test_dates_interval_three_code_two, self.test_dates_interval_three_code_three], 'Failed for date {0}'.format(date_string))
+        for date_string in self.test_interval_three_and_four_dates_list:
+            test_list_of_codes = self.test_date_interval_dictionary.getIntervalCodesByDate(date_string)
+            self.assertEqual(test_list_of_codes, [self.test_dates_interval_three_code_four, self.test_dates_interval_three_code_three], 'Failed for date {0}'.format(date_string))
+
 
 if __name__ == '__main__':
     unittest.main()
