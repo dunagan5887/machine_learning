@@ -6,14 +6,30 @@ from symbolData import SymbolData
 from symbolData import SymbolDataCollection
 from dunagan_utility import sort_float_dictionary_ascending
 from dunagan_utility import write_dictionary_to_file
+from dateInterval import DateInterval
+from dateInterval import DateIntervalDictionary
+from dateInterval import DateIntervalFactory
+from dateDelta import DateDelta
 
-stock_data_output_directory = 'data/stock_data/'
+stock_data_output_directory = '/var/machine_learning/stocks/data/stock_data/'
 
-span_code = 'year_leading_to_crash_and_since'
-today_code = 'today'
-since_crash_code = 'since_crash'
+date_to_track_from = '2015-12-29'
+today_date = '2016-01-19'
+
+symbol_collection_span_code = 'crash_plus_12_periods_leading_up'
+
+days_between_dates = DateDelta.getDaysBetweenDateStrings(date_to_track_from, today_date)
+dateIntervalDictionary = DateIntervalFactory.getDateIntervalDictionary(date_to_track_from, days_between_dates, 12, 'days', dictionary_code = 'leading_up_to_crash')
+
+since_crash_interval_code = 'since_crash'
+betweenCrashDatesInterval = DateInterval(date_to_track_from, today_date, since_crash_interval_code)
+three_month_span_code = 'three_month'
+threeMonthDateInterval = DateIntervalFactory.getDateIntervals(date_to_track_from, 12, 1, 'weeks').pop()
 one_year_span_code = 'one_year'
-three_months_span_code = 'three_months'
+oneYearDateInterval = DateIntervalFactory.getDateIntervals(date_to_track_from, 52, 1, 'weeks').pop()
+
+auxiliaryIntervals = {since_crash_interval_code : betweenCrashDatesInterval, three_month_span_code : threeMonthDateInterval,
+                      one_year_span_code : oneYearDateInterval}
 
 price_threshold = 3.0
 
@@ -23,7 +39,9 @@ def initializeNewSymbol(symbol, symbolCollectionInstance):
     :return: SymbolData
     """
     symbolDataInstance = symbolCollectionInstance.addSymbolToCollection(symbol)
-    symbolDataInstance.initializeSpanByCode(span_code)
+    symbolDataInstance.initializeSpanByCode(symbol_collection_span_code)
+    for code, dateInterval in auxiliaryIntervals.items():
+        symbolDataInstance.initializeSpanByCode(code)
     return symbolDataInstance
 
 
@@ -35,15 +53,16 @@ symbolCollectionInstance = SymbolDataCollection()
 # -----------------------------------
 # BEGIN: Loop through incoming data lines
 #  --------------------------------
-#for input_line in sys.stdin:
-#test_file = open('/tmp/test_reduction.csv', 'r')
-#incoming_data = test_file.readlines()
-#test_file.close()
 
-for input_line in sys.stdin:
+test_file = open('/tmp/test_reduction.csv', 'r')
+incoming_data = test_file.readlines()
+test_file.close()
+for input_line in incoming_data:
+
+#for input_line in sys.stdin:
     input_line = input_line.strip()
 
-    symbol_and_date, data_close_price, data_open_price, data_high_price, data_low_price, flag = input_line.split("\t", 6)
+    symbol_and_date, data_close_price, data_open_price, data_high_price, data_low_price = input_line.split("\t", 5)
     symbol, date = symbol_and_date.split("_", 1)
 
     if date == last_date:
@@ -68,18 +87,18 @@ for input_line in sys.stdin:
         delta_percentage = None
 
     unit_labels = []
+    date_interval_codes_for_date = dateIntervalDictionary.getIntervalCodesByDate(date)
+    if not(date_interval_codes_for_date is None):
+        for interval_code in date_interval_codes_for_date:
+            symbolDataInstance.addSpanValueByCode(symbol_collection_span_code, date_interval_codes_for_date, data_close_price, data_open_price, data_high_price, data_low_price, delta, delta_percentage)
 
-    if flag == one_year_span_code:
-        unit_labels = [one_year_span_code]
-    elif flag == three_months_span_code:
-        unit_labels = [one_year_span_code, three_months_span_code]
-    elif flag == since_crash_code:
-        unit_labels = [one_year_span_code, three_months_span_code, since_crash_code]
-    elif flag == today_code:
-        unit_labels = [one_year_span_code, three_months_span_code, since_crash_code]
+    for interval_code, DateInterval in auxiliaryIntervals.items():
+        is_date_in_interval = DateInterval.isDateInInterval(date)
+        if is_date_in_interval:
+            symbolDataInstance.addSpanValueByCode(interval_code, interval_code, data_close_price, data_open_price, data_high_price, data_low_price, delta, delta_percentage)
+
+    if date == today_date:
         symbolDataInstance.setTodayPrice(data_close_price)
-
-    symbolDataInstance.addSpanValueByCode(span_code, unit_labels, data_close_price, data_open_price, data_high_price, data_low_price, delta, delta_percentage)
 
     last_symbol = symbol
     last_date = date
@@ -89,11 +108,11 @@ for input_line in sys.stdin:
 #  --------------------------------
 
 
-sorted_symbol_price_deltas = symbolCollectionInstance.getSortedSpanDeltaValuesByCode(span_code, since_crash_code)
-sorted_symbol_price_delta_percentages = symbolCollectionInstance.getSortedSpanDeltaValuesByCode(span_code, since_crash_code, get_percentages = True)
+sorted_symbol_price_deltas = symbolCollectionInstance.getSortedSpanDeltaValuesByCode(since_crash_interval_code, since_crash_interval_code)
+sorted_symbol_price_delta_percentages = symbolCollectionInstance.getSortedSpanDeltaValuesByCode(since_crash_interval_code, since_crash_interval_code, get_percentages = True)
 
-sorted_symbol_percentage_off_three_month_average = symbolCollectionInstance.getSortedTodayPricePercentageOffSpanAveragesByCode(span_code, three_months_span_code)
-sorted_symbol_percentage_off_year_average = symbolCollectionInstance.getSortedTodayPricePercentageOffSpanAveragesByCode(span_code, one_year_span_code)
+sorted_symbol_percentage_off_three_month_average = symbolCollectionInstance.getSortedTodayPricePercentageOffSpanAveragesByCode(three_month_span_code, three_month_span_code)
+sorted_symbol_percentage_off_year_average = symbolCollectionInstance.getSortedTodayPricePercentageOffSpanAveragesByCode(one_year_span_code, one_year_span_code)
 
 sorted_symbol_percentage_off_three_month_average_above_price_threshold = symbolCollectionInstance.getSortedDictionaryOfValuesAboveTodayPriceThreshold(sorted_symbol_percentage_off_three_month_average, price_threshold)
 sorted_symbol_percentage_off_year_average_above_price_threshold = symbolCollectionInstance.getSortedDictionaryOfValuesAboveTodayPriceThreshold(sorted_symbol_percentage_off_year_average, price_threshold)

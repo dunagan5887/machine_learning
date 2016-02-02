@@ -131,22 +131,23 @@ class TestDateIntervalFactory(unittest.TestCase):
         self.frequency_one = 3
         self.count_one = 4
         self.unit_one = 'weeks'
-        self.direction = True
-        self.test_dictionary_of_date_intervals_one = DateIntervalFactory.getDateIntervalDates(self.start_date, self.frequency_one, self.count_one, self.unit_one, self.direction)
+        self.direction_one = True
+        self.test_dictionary_of_date_intervals_one = DateIntervalFactory.getDateIntervalDates(self.start_date, self.frequency_one, self.count_one, self.unit_one, self.direction_one)
         self.expected_interval_dates_one = OrderedDict()
-        self.expected_interval_dates_one['0-3_weeks'] = ['2015-12-29', '2015-12-08']
-        self.expected_interval_dates_one['3-6_weeks'] = ['2015-12-08', '2015-11-17']
-        self.expected_interval_dates_one['6-9_weeks'] = ['2015-11-17', '2015-10-27']
-        self.expected_interval_dates_one['9-12_weeks'] = ['2015-10-27', '2015-10-06']
+        self.expected_interval_dates_one['0-3_weeks'] = ['2015-12-08', '2015-12-29']
+        self.expected_interval_dates_one['3-6_weeks'] = ['2015-11-17', '2015-12-08']
+        self.expected_interval_dates_one['6-9_weeks'] = ['2015-10-27', '2015-11-17']
+        self.expected_interval_dates_one['9-12_weeks'] = ['2015-10-06', '2015-10-27']
 
         self.frequency_two = 30
         self.count_two = 3
         self.unit_two = 'days'
-        self.test_dictionary_of_date_intervals_two = DateIntervalFactory.getDateIntervalDates(self.start_date, self.frequency_two, self.count_two, self.unit_two, self.direction)
+        self.direction_two = False
+        self.test_dictionary_of_date_intervals_two = DateIntervalFactory.getDateIntervalDates(self.start_date, self.frequency_two, self.count_two, self.unit_two, self.direction_two)
         self.expected_interval_dates_two = OrderedDict()
-        self.expected_interval_dates_two['0-30_days'] = ['2015-12-29', '2015-11-29']
-        self.expected_interval_dates_two['30-60_days'] = ['2015-11-29', '2015-10-30']
-        self.expected_interval_dates_two['60-90_days'] = ['2015-10-30', '2015-09-30']
+        self.expected_interval_dates_two['0-30_days'] = ['2015-12-29', '2016-01-28']
+        self.expected_interval_dates_two['30-60_days'] = ['2016-01-28', '2016-02-27']
+        self.expected_interval_dates_two['60-90_days'] = ['2016-02-27', '2016-03-28']
 
         self.start_date_three = '2015-12-29'
         self.frequency_three = 21
@@ -172,6 +173,45 @@ class TestDateIntervalFactory(unittest.TestCase):
         self.test_interval_three_and_four_dates_list = ['2016-03-01']
         self.test_interval_four_dates_list = ['2016-03-15', '2016-03-22']
         self.test_no_interval_list = ['2014-12-30', '2015-11-30', '2015-12-28', '2016-03-23', '2016-04-23', '2017-03-20']
+
+        self.start_date_four = '2015-12-29'
+        self.frequency_four = 21
+        self.count_four = 4
+        self.unit_four = 'days'
+        self.direction_four = True
+        self.code_four = 'test_date_interval_dictionary_backwards'
+        self.test_date_interval_dictionary_backwards = DateIntervalFactory.getDateIntervalDictionary(self.start_date, self.frequency_four, self.count_four, self.unit_four, self.direction_four, self.code_four)
+        self.test_dates_interval_four_code_one = '0-21_days'
+        self.test_dates_interval_four_code_two = '21-42_days'
+        self.test_dates_interval_four_code_three = '42-63_days'
+        self.test_dates_interval_four_code_four = '63-84_days'
+
+    def test_getIntervalCodesByDate(self):
+        test_date_one = '2015-12-19'
+        test_date_two = '2016-01-24'
+        test_date_three = '2016-02-09'
+        test_interval_codes_for_date_one_forwards = self.test_date_interval_dictionary.getIntervalCodesByDate(test_date_one)
+        self.assertIsNone(test_interval_codes_for_date_one_forwards)
+        test_interval_codes_for_date_two_forwards = self.test_date_interval_dictionary.getIntervalCodesByDate(test_date_two)
+        expected_interval_codes_for_date_two_forwards = [self.test_dates_interval_three_code_two]
+        self.assertEqual(test_interval_codes_for_date_two_forwards, expected_interval_codes_for_date_two_forwards)
+        test_interval_codes_for_date_three_forwards = self.test_date_interval_dictionary.getIntervalCodesByDate(test_date_three)
+        expected_interval_codes_for_date_three_forwards = [self.test_dates_interval_three_code_two, self.test_dates_interval_three_code_three]
+        self.assertEqual(test_interval_codes_for_date_three_forwards, expected_interval_codes_for_date_three_forwards)
+
+        test_interval_codes_for_date_one_backwards = self.test_date_interval_dictionary_backwards.getIntervalCodesByDate(test_date_one)
+        expected_interval_codes_for_date_one_backwards = [self.test_dates_interval_four_code_one]
+        self.assertEqual(test_interval_codes_for_date_one_backwards, expected_interval_codes_for_date_one_backwards)
+        test_interval_codes_for_date_two_backwards = self.test_date_interval_dictionary_backwards.getIntervalCodesByDate(test_date_two)
+        self.assertIsNone(test_interval_codes_for_date_two_backwards)
+        test_date_four = '2015-12-08'
+        test_interval_codes_for_date_four_backwards = self.test_date_interval_dictionary_backwards.getIntervalCodesByDate(test_date_four)
+        expected_interval_codes_for_date_four_backwards = [self.test_dates_interval_four_code_one, self.test_dates_interval_four_code_two]
+        self.assertEqual(test_interval_codes_for_date_four_backwards, expected_interval_codes_for_date_four_backwards)
+        test_date_five = '2015-10-15'
+        test_interval_codes_for_date_five_backwards = self.test_date_interval_dictionary_backwards.getIntervalCodesByDate(test_date_five)
+        expected_interval_codes_for_date_five_backwards = [self.test_dates_interval_four_code_four]
+        self.assertEqual(test_interval_codes_for_date_five_backwards, expected_interval_codes_for_date_five_backwards)
 
     def test_getDateIntervalDates(self):
         self.assertEqual(self.expected_interval_dates_one, self.test_dictionary_of_date_intervals_one)

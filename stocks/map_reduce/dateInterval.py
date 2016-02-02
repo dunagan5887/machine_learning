@@ -79,13 +79,30 @@ class DateIntervalFactory:
         :param dictionary_code:
         :return:DateIntervalDictionary
         """
-        date_interval_dates_dict = DateIntervalFactory.getDateIntervalDates(start_date, frequency, count, unit, direction_is_past)
         dateIntervalDictionaryInstance = DateIntervalDictionary(dictionary_code)  # type: DateIntervalDictionary
+        date_intervals_list = DateIntervalFactory.getDateIntervals(start_date, frequency, count, unit, direction_is_past)
+        for dateInterval in date_intervals_list:
+            dateIntervalDictionaryInstance.addDateInterval(dateInterval, dateInterval.code)
+        return dateIntervalDictionaryInstance
+
+    @staticmethod
+    def getDateIntervals(start_date, frequency, count, unit = None, direction_is_past = None):
+        """
+        :param start_date:
+        :param frequency:
+        :param count:
+        :param unit:
+        :param direction_is_past:
+        :return: list of DateInterval
+        """
+        date_interval_dates_dict = DateIntervalFactory.getDateIntervalDates(start_date, frequency, count, unit, direction_is_past)
+        date_intervals_list = []
         for code, date_interval_dates_dict in date_interval_dates_dict.items():
             start_date = date_interval_dates_dict[0]
             end_date = date_interval_dates_dict[1]
-            dateIntervalDictionaryInstance.addDateIntervalByDates(start_date, end_date, code)
-        return dateIntervalDictionaryInstance
+            dateInterval = DateInterval(start_date, end_date, code)
+            date_intervals_list.append(dateInterval)
+        return date_intervals_list
 
     @staticmethod
     def getDateIntervalDates(start_date, frequency, count, unit = None, direction_is_past = None):
@@ -111,7 +128,10 @@ class DateIntervalFactory:
             interval_date_string = interval_datetime.strftime('%Y-%m-%d')
             code_label = str(i * frequency) + '-' + str((i+1) * frequency)
             code = code_label + '_' + str(unit)
-            date_interval_dates_dict[code] = [datetime_to_act_from_string, interval_date_string]
+            if direction_is_past:
+                date_interval_dates_dict[code] = [interval_date_string, datetime_to_act_from_string]
+            else:
+                date_interval_dates_dict[code] = [datetime_to_act_from_string, interval_date_string]
             datetime_to_act_from = interval_datetime
             datetime_to_act_from_string = interval_date_string
 
