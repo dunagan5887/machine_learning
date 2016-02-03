@@ -20,14 +20,46 @@ class Span:
             self.label_to_unit_index_mapping[label].append(unit_index)
         return self
 
+    def getMaxUnitDelta(self, get_percentage = False):
+        """
+
+        :param bool get_percentage:
+        :return: dict
+        """
+        max_unit_delta = float('-inf')
+        max_unit_label = None
+        for units_label, unit_index_mapping in self.label_to_unit_index_mapping.items():
+            span_delta = self.getSpanDelta(units_label, get_percentage)
+            if span_delta > max_unit_delta:
+                max_unit_label = units_label
+                max_unit_delta = span_delta
+
+        return {'delta' : max_unit_delta, 'label' : max_unit_label}
+
+    def getMinUnitDelta(self, get_percentage = False):
+        """
+
+        :param bool get_percentage:
+        :return: dict
+        """
+        min_unit_delta = float('inf')
+        min_unit_label = None
+        for units_label, unit_index_mapping in self.label_to_unit_index_mapping.items():
+            span_delta = self.getSpanDelta(units_label, get_percentage)
+            if span_delta < min_unit_delta:
+                min_unit_label = units_label
+                min_unit_delta = span_delta
+
+        return {'delta' : min_unit_delta, 'label' : min_unit_label}
+
     def getSpanUnitsByLabel(self, units_label):
         """
         :param string units_label:
-        :return: dict
+        :return: OrderedDict
         """
         if not(units_label in self.label_to_unit_index_mapping):
             return None
-        dict_of_span_units = {}
+        dict_of_span_units = OrderedDict()
         for unit_index in self.label_to_unit_index_mapping[units_label]:
             spanUnit = self.units[unit_index]
             dict_of_span_units[unit_index] = spanUnit

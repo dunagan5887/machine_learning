@@ -54,12 +54,12 @@ symbolCollectionInstance = SymbolDataCollection()
 # BEGIN: Loop through incoming data lines
 #  --------------------------------
 
-test_file = open('/tmp/test_reduction.csv', 'r')
-incoming_data = test_file.readlines()
-test_file.close()
-for input_line in incoming_data:
+#test_file = open('/tmp/test_reduction.csv', 'r')
+#incoming_data = test_file.readlines()
+#test_file.close()
+#for input_line in incoming_data:
 
-#for input_line in sys.stdin:
+for input_line in sys.stdin:
     input_line = input_line.strip()
 
     symbol_and_date, data_close_price, data_open_price, data_high_price, data_low_price = input_line.split("\t", 5)

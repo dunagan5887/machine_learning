@@ -5,6 +5,102 @@ from symbolData import SymbolDataCollection
 
 class TestSymbolData(unittest.TestCase):
 
+    def tearDown(self):
+        self.unitDeltaTestsSymbol = None
+
+    def setUp(self):
+        self.unit_delta_test_symbol = 'tud'
+        self.unitDeltaTestsSymbol = SymbolData(self.unit_delta_test_symbol)
+        self.tud_span_code = 'tud_span'
+        self.unitDeltaTestsSymbol.initializeSpanByCode(self.tud_span_code)
+        self.unit_label_one = 'unit_one'
+        self.unit_delta_test_list_one = [0.3, 13.4, 0.8]
+        self.unit_label_two = 'unit_two'
+        self.unit_delta_test_list_two = [2.8, 13.7, 0.9]
+        self.unit_label_three = 'unit_three'
+        self.unit_delta_test_list_three = [10.9, 14.4, 15.3]
+        self.unit_label_four = 'unit_four'
+        self.unit_delta_test_list_four = [15.3, 16.3, 17.3]
+        self.unit_label_five = 'unit_five'
+        self.unit_delta_test_list_five = [37.3, 16.3, 34.1]
+        self.unit_dict = {self.unit_label_one : self.unit_delta_test_list_one,
+                          self.unit_label_two : self.unit_delta_test_list_two,
+                          self.unit_label_three : self.unit_delta_test_list_three,
+                          self.unit_label_four : self.unit_delta_test_list_four,
+                          self.unit_label_five : self.unit_delta_test_list_five}
+        for label, list_of_prices in self.unit_dict.items():
+            for price in list_of_prices:
+                self.unitDeltaTestsSymbol.addSpanValueByCode(self.tud_span_code, [label], close_price = price, open_price = price)
+        self.max_unit_delta = 4.4
+        self.max_unit_delta_label = self.unit_label_three
+        self.min_unit_delta = -3.2
+        self.min_unit_delta_label = self.unit_label_five
+        self.max_unit_delta_percentage = 1.66667
+        self.max_unit_delta_percentage_label = self.unit_label_one
+        self.min_unit_delta_percentage = -0.678571429
+        self.min_unit_delta_percentage_label = self.unit_label_two
+
+        self.tud_span_code_two = 'tud_span_two'
+        self.tud_span_two_unit_label_one = 'span_two_unit_one'
+        self.tud_span_two_unit_delta_test_list_one = [14.3, 13.4, 115.1]
+        self.tud_span_two_unit_label_two = 'span_two_unit_two'
+        self.tud_span_two_unit_delta_test_list_two = [32.8, 13.7, 0.9]
+        self.unitDeltaTestsSymbol.initializeSpanByCode(self.tud_span_code_two)
+        self.unit_dict_two = {self.tud_span_two_unit_label_one : self.tud_span_two_unit_delta_test_list_one,
+                              self.tud_span_two_unit_label_two : self.tud_span_two_unit_delta_test_list_two}
+        for label, list_of_prices in self.unit_dict_two.items():
+            for price in list_of_prices:
+                self.unitDeltaTestsSymbol.addSpanValueByCode(self.tud_span_code_two, [label], close_price = price, open_price = price)
+        self.max_unit_delta_two = 100.8
+        self.max_unit_delta_percentage_two = 7.048951049
+        self.max_unit_delta_label_two = self.tud_span_two_unit_label_one
+        self.min_unit_delta_two = -31.9
+        self.min_unit_delta_percentage_two = -0.972560976
+        self.min_unit_delta_label_two = self.tud_span_two_unit_label_two
+
+    def test_getMaxDeltaForSpan(self):
+        test_max_delta_for_span_tud_one = self.unitDeltaTestsSymbol.getMaxDeltaForSpan(self.tud_span_code)
+        test_max_value = test_max_delta_for_span_tud_one['delta']
+        test_max_value_label = test_max_delta_for_span_tud_one['label']
+        test_min_delta_for_span_tud_one = self.unitDeltaTestsSymbol.getMinDeltaForSpan(self.tud_span_code)
+        test_min_value = round(test_min_delta_for_span_tud_one['delta'], 2)
+        test_min_value_label = test_min_delta_for_span_tud_one['label']
+        self.assertEqual(test_max_value, self.max_unit_delta)
+        self.assertEqual(test_max_value_label, self.max_unit_delta_label)
+        self.assertEqual(test_min_value, self.min_unit_delta)
+        self.assertEqual(test_min_value_label, self.min_unit_delta_label)
+        test_max_delta_percentage = self.unitDeltaTestsSymbol.getMaxDeltaForSpan(self.tud_span_code, True)
+        test_max_delta_percentage_value = round(test_max_delta_percentage['delta'], 5)
+        test_max_delta_percentage_label = test_max_delta_percentage['label']
+        test_min_delta_percentage = self.unitDeltaTestsSymbol.getMinDeltaForSpan(self.tud_span_code, True)
+        test_min_delta_percentage_value = round(test_min_delta_percentage['delta'], 9)
+        test_min_delta_percentage_label = test_min_delta_percentage['label']
+        self.assertEqual(test_max_delta_percentage_value, self.max_unit_delta_percentage)
+        self.assertEqual(test_max_delta_percentage_label, self.max_unit_delta_percentage_label)
+        self.assertEqual(test_min_delta_percentage_value, self.min_unit_delta_percentage)
+        self.assertEqual(test_min_delta_percentage_label, self.min_unit_delta_percentage_label)
+
+        test_max_delta_two = self.unitDeltaTestsSymbol.getMaxDeltaForSpan(self.tud_span_code_two)
+        test_max_value_two = test_max_delta_two['delta']
+        test_max_value_label_two = test_max_delta_two['label']
+        test_min_delta_two = self.unitDeltaTestsSymbol.getMinDeltaForSpan(self.tud_span_code_two)
+        test_min_value_two = round(test_min_delta_two['delta'], 2)
+        test_min_value_label_two = test_min_delta_two['label']
+        self.assertEqual(test_max_value_two, self.max_unit_delta_two)
+        self.assertEqual(test_max_value_label_two, self.max_unit_delta_label_two)
+        self.assertEqual(test_min_value_two, self.min_unit_delta_two)
+        self.assertEqual(test_min_value_label_two, self.min_unit_delta_label_two)
+        test_max_delta_percentage_two = self.unitDeltaTestsSymbol.getMaxDeltaForSpan(self.tud_span_code_two, True)
+        test_max_delta_percentage_value_two = round(test_max_delta_percentage_two['delta'], 9)
+        test_max_delta_percentage_label_two = test_max_delta_percentage_two['label']
+        test_min_delta_percentage_two = self.unitDeltaTestsSymbol.getMinDeltaForSpan(self.tud_span_code_two, True)
+        test_min_delta_percentage_value_two = round(test_min_delta_percentage_two['delta'], 9)
+        test_min_delta_percentage_label_two = test_min_delta_percentage_two['label']
+        self.assertEqual(test_max_delta_percentage_value_two, self.max_unit_delta_percentage_two)
+        self.assertEqual(test_max_delta_percentage_label_two, self.max_unit_delta_label_two)
+        self.assertEqual(test_min_delta_percentage_value_two, self.min_unit_delta_percentage_two)
+        self.assertEqual(test_min_delta_percentage_label_two, self.min_unit_delta_label_two)
+
     def test_init(self):
         expected_symbol = 'A'
         symbolDataTest = SymbolData(expected_symbol)

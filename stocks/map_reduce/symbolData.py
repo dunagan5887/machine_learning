@@ -40,6 +40,26 @@ class SymbolData:
         span = self.spans[span_code]
         return span.getSpanDelta(units_code, get_percentage)
 
+    def getMaxDeltaForSpan(self, span_code, get_percentage = False):
+        """
+        :param string span_code:
+        :param bool get_percentage:
+        :return: dict
+        """
+        span = self.spans[span_code]
+        max_delta = span.getMaxUnitDelta(get_percentage)
+        return max_delta
+
+    def getMinDeltaForSpan(self, span_code, get_percentage = False):
+        """
+        :param string span_code:
+        :param bool get_percentage:
+        :return: dict
+        """
+        span = self.spans[span_code]
+        min_delta = span.getMinUnitDelta(get_percentage)
+        return min_delta
+
 class SymbolDataCollection:
     
     def __init__(self):
