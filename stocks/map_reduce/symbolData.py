@@ -40,6 +40,16 @@ class SymbolData:
         span = self.spans[span_code]
         return span.getSpanDelta(units_code, get_percentage)
 
+    def getMaxDeltaForSpanValue(self, span_code, get_percentage = False):
+        """
+        :param string span_code:
+        :param bool get_percentage:
+        :return: float
+        """
+        span = self.spans[span_code]
+        max_delta = span.getMaxUnitDeltaValue(get_percentage)
+        return max_delta
+
     def getMaxDeltaForSpan(self, span_code, get_percentage = False):
         """
         :param string span_code:
@@ -50,6 +60,16 @@ class SymbolData:
         max_delta = span.getMaxUnitDelta(get_percentage)
         return max_delta
 
+    def getMinDeltaForSpanValue(self, span_code, get_percentage = False):
+        """
+        :param string span_code:
+        :param bool get_percentage:
+        :return: float
+        """
+        span = self.spans[span_code]
+        min_delta = span.getMinUnitDeltaValue(get_percentage)
+        return min_delta
+
     def getMinDeltaForSpan(self, span_code, get_percentage = False):
         """
         :param string span_code:
@@ -59,6 +79,30 @@ class SymbolData:
         span = self.spans[span_code]
         min_delta = span.getMinUnitDelta(get_percentage)
         return min_delta
+
+    def getSpanDeltaValueToSpanMaxDeltaRatio(self, span_delta_code, span_max_delta_code, get_percentage = False):
+        """
+        :param string span_delta_code:
+        :param string span_max_delta_code:
+        :return: float|None
+        """
+        span_delta_value = self.getSpanDeltaByCode(span_delta_code, get_percentage = get_percentage)
+        span_max_delta_value = self.getMaxDeltaForSpanValue(span_max_delta_code, get_percentage = get_percentage)
+        if (not(span_delta_value is None) and not(span_max_delta_value is None)):
+            return float(span_delta_value) / span_max_delta_value
+        return None
+
+    def getSpanDeltaValueToSpanMinDeltaRatio(self, span_delta_code, span_min_delta_code, get_percentage = False):
+        """
+        :param string span_delta_code:
+        :param string span_min_delta_code:
+        :return: float|None
+        """
+        span_delta_value = self.getSpanDeltaByCode(span_delta_code, get_percentage = get_percentage)
+        span_min_delta_value = self.getMinDeltaForSpanValue(span_min_delta_code, get_percentage = get_percentage)
+        if (not(span_delta_value is None) and not(span_min_delta_value is None)):
+            return float(span_delta_value) / span_min_delta_value
+        return None
 
 class SymbolDataCollection:
     
@@ -86,8 +130,35 @@ class SymbolDataCollection:
             return self.symbols_dict[symbol]
         return None
 
-    #def getSortedSpanDeltaValueToSpanMaxDeltaRatios(self, span_delta_code, span_max_delta_code):
+    def getSortedSpanDeltaValueToSpanMaxDeltaRatios(self, span_delta_code, span_max_delta_code, get_percentage = False):
+        """
+        :param string span_delta_code:
+        :param string span_max_delta_code:
+        :param bool get_percentage:
+        :return: OrderedDict
+        """
+        span_delta_ratios_by_symbol = {}
+        for symbol, symbolDataInstance in self.symbols_dict.items():  # type: SymbolData
+            span_max_delta_ratio = symbolDataInstance.getSpanDeltaValueToSpanMaxDeltaRatio(span_delta_code, span_max_delta_code, get_percentage)
+            if not(span_max_delta_ratio is None):
+                span_delta_ratios_by_symbol[symbol] = span_max_delta_ratio
+        sorted_span_delta_ratios_by_symbol = sort_float_dictionary_ascending(span_delta_ratios_by_symbol)
+        return sorted_span_delta_ratios_by_symbol
 
+    def getSortedSpanDeltaValueToSpanMinDeltaRatios(self, span_delta_code, span_min_delta_code, get_percentage = False):
+        """
+        :param string span_delta_code:
+        :param string span_min_delta_code:
+        :param bool get_percentage:
+        :return: OrderedDict
+        """
+        span_delta_ratios_by_symbol = {}
+        for symbol, symbolDataInstance in self.symbols_dict.items():  # type: SymbolData
+            span_min_delta_ratio = symbolDataInstance.getSpanDeltaValueToSpanMinDeltaRatio(span_delta_code, span_min_delta_code, get_percentage)
+            if not(span_min_delta_ratio is None):
+                span_delta_ratios_by_symbol[symbol] = span_min_delta_ratio
+        sorted_span_delta_ratios_by_symbol = sort_float_dictionary_ascending(span_delta_ratios_by_symbol)
+        return sorted_span_delta_ratios_by_symbol
 
     def getSortedSpanDeltaValuesByCode(self, span_code, unit_code = None, get_percentages = False):
         """

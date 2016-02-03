@@ -21,6 +21,14 @@ class Span:
             self.label_to_unit_index_mapping[label].append(unit_index)
         return self
 
+    def getMaxUnitDeltaValue(self, get_percentage = False):
+        """
+        :param bool get_percentage:
+        :return: float
+        """
+        max_unit_delta = self.getMaxUnitDelta(get_percentage)
+        return max_unit_delta['delta']
+
     def getMaxUnitDelta(self, get_percentage = False):
         """
 
@@ -41,6 +49,14 @@ class Span:
             return {'delta' : None, 'label' : None}
 
         return {'delta' : max_unit_delta, 'label' : max_unit_label}
+
+    def getMinUnitDeltaValue(self, get_percentage = False):
+        """
+        :param bool get_percentage:
+        :return: float
+        """
+        min_unit_delta = self.getMinUnitDelta(get_percentage)
+        return min_unit_delta['delta']
 
     def getMinUnitDelta(self, get_percentage = False):
         """

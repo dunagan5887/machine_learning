@@ -57,9 +57,26 @@ class TestSymbolData(unittest.TestCase):
         self.min_unit_delta_two = -31.9
         self.min_unit_delta_percentage_two = -0.972560976
         self.min_unit_delta_label_two = self.tud_span_two_unit_label_two
+        self.expected_span_delta_value_to_span_max_delta_ratio = -3.045454545
+        self.expected_span_delta_value_to_span_max_delta_percentage_ratio = -0.56224
+        self.expected_span_delta_value_to_span_min_delta_ratio = 4.1875
+        self.expected_span_delta_value_to_span_min_delta_percentage_ratio = 1.38093
+
         self.empty_symbol_code = 'empty'
         self.emptySymbol = SymbolData(self.empty_symbol_code)
         self.emptySymbol.initializeSpanByCode(self.tud_span_code)
+
+    def test_getSpanDeltaValueToSpanMaxDeltaRatio(self):
+        test_max_ratio = round(self.unitDeltaTestsSymbol.getSpanDeltaValueToSpanMaxDeltaRatio(self.tud_span_code_two, self.tud_span_code), 9)
+        self.assertEqual(test_max_ratio, self.expected_span_delta_value_to_span_max_delta_ratio)
+        test_max_ratio_percentage = round(self.unitDeltaTestsSymbol.getSpanDeltaValueToSpanMaxDeltaRatio(self.tud_span_code_two, self.tud_span_code, True), 5)
+        self.assertEqual(test_max_ratio_percentage, self.expected_span_delta_value_to_span_max_delta_percentage_ratio)
+
+    def test_getSpanDeltaValueToSpanMinDeltaRatio(self):
+        test_min_ratio = round(self.unitDeltaTestsSymbol.getSpanDeltaValueToSpanMinDeltaRatio(self.tud_span_code_two, self.tud_span_code), 4)
+        self.assertEqual(test_min_ratio, self.expected_span_delta_value_to_span_min_delta_ratio)
+        test_min_ratio_percentage = round(self.unitDeltaTestsSymbol.getSpanDeltaValueToSpanMinDeltaRatio(self.tud_span_code_two, self.tud_span_code, True), 5)
+        self.assertEqual(test_min_ratio_percentage, self.expected_span_delta_value_to_span_min_delta_percentage_ratio)
 
     def test_getMaxDeltaForSpan(self):
         test_max_delta_for_span_tud_one = self.unitDeltaTestsSymbol.getMaxDeltaForSpan(self.tud_span_code)
@@ -89,6 +106,12 @@ class TestSymbolData(unittest.TestCase):
         self.assertIsNone(test_value)
         self.assertIsNone(test_label)
 
+    def test_getMaxDeltaForSpanValue(self):
+        test_max_value_explicit = self.unitDeltaTestsSymbol.getMaxDeltaForSpanValue(self.tud_span_code)
+        self.assertEqual(test_max_value_explicit, self.max_unit_delta)
+        test_max_delta_percentage_value_explicit = round(self.unitDeltaTestsSymbol.getMaxDeltaForSpanValue(self.tud_span_code, True), 5)
+        self.assertEqual(test_max_delta_percentage_value_explicit, self.max_unit_delta_percentage)
+
     def test_getMinDeltaForSpan(self):
         test_min_delta_for_span_tud_one = self.unitDeltaTestsSymbol.getMinDeltaForSpan(self.tud_span_code)
         test_min_value = round(test_min_delta_for_span_tud_one['delta'], 2)
@@ -116,6 +139,12 @@ class TestSymbolData(unittest.TestCase):
         test_label = test_empty_value['label']
         self.assertIsNone(test_value)
         self.assertIsNone(test_label)
+
+    def test_getMinDeltaForSpanValue(self):
+        test_min_value_explicit = round(self.unitDeltaTestsSymbol.getMinDeltaForSpanValue(self.tud_span_code), 2)
+        self.assertEqual(test_min_value_explicit, self.min_unit_delta)
+        test_min_delta_percentage_explicit = round(self.unitDeltaTestsSymbol.getMinDeltaForSpanValue(self.tud_span_code, True), 9)
+        self.assertEqual(test_min_delta_percentage_explicit, self.min_unit_delta_percentage)
 
     def test_init(self):
         expected_symbol = 'A'
@@ -217,6 +246,124 @@ class TestSymbolData(unittest.TestCase):
         self.assertEqual(expected_even_units_delta_percentage, test_odd_units_delta_percentage)
 
 class TestSymbolDataCollection(unittest.TestCase):
+
+    def tearDown(self):
+        self.unitDeltaTestsSymbol = None
+
+    def setUp(self):
+        self.unitDeltaTestsSymbolCollection = SymbolDataCollection()
+        self.unit_delta_test_symbol = 'tud'
+        self.unitDeltaTestsSymbolOne = self.unitDeltaTestsSymbolCollection.addSymbolToCollection(self.unit_delta_test_symbol)
+        self.tud_span_code = 'tud_span'
+        self.unitDeltaTestsSymbolOne.initializeSpanByCode(self.tud_span_code)
+        self.unit_label_one = 'unit_one'
+        self.unit_delta_test_list_one = [0.3, 13.4, 0.8]
+        self.unit_label_two = 'unit_two'
+        self.unit_delta_test_list_two = [2.8, 13.7, 0.9]
+        self.unit_label_three = 'unit_three'
+        self.unit_delta_test_list_three = [10.9, 14.4, 15.3]
+        self.unit_label_four = 'unit_four'
+        self.unit_delta_test_list_four = [15.3, 16.3, 17.3]
+        self.unit_label_five = 'unit_five'
+        self.unit_delta_test_list_five = [37.3, 16.3, 34.1]
+        self.unit_dict = {self.unit_label_one : self.unit_delta_test_list_one,
+                          self.unit_label_two : self.unit_delta_test_list_two,
+                          self.unit_label_three : self.unit_delta_test_list_three,
+                          self.unit_label_four : self.unit_delta_test_list_four,
+                          self.unit_label_five : self.unit_delta_test_list_five}
+        for label, list_of_prices in self.unit_dict.items():
+            for price in list_of_prices:
+                self.unitDeltaTestsSymbolOne.addSpanValueByCode(self.tud_span_code, [label], close_price = price, open_price = price)
+        self.tud_span_code_two = 'tud_span_two'
+        self.tud_span_two_unit_label_one = 'span_two_unit_one'
+        self.tud_span_two_unit_delta_test_list_one = [14.3, 13.4, 115.1]
+        self.tud_span_two_unit_label_two = 'span_two_unit_two'
+        self.tud_span_two_unit_delta_test_list_two = [32.8, 13.7, 0.9]
+        self.unitDeltaTestsSymbolOne.initializeSpanByCode(self.tud_span_code_two)
+        self.unit_dict_two = {self.tud_span_two_unit_label_one : self.tud_span_two_unit_delta_test_list_one,
+                              self.tud_span_two_unit_label_two : self.tud_span_two_unit_delta_test_list_two}
+        for label, list_of_prices in self.unit_dict_two.items():
+            for price in list_of_prices:
+                self.unitDeltaTestsSymbolOne.addSpanValueByCode(self.tud_span_code_two, [label], close_price = price, open_price = price)
+
+        self.unit_delta_test_symbol_two = 'tud_two'
+        self.unitDeltaTestsSymbolTwo = self.unitDeltaTestsSymbolCollection.addSymbolToCollection(self.unit_delta_test_symbol_two)
+        self.unitDeltaTestsSymbolTwo.initializeSpanByCode(self.tud_span_code)
+        self.unitDeltaTestsSymbolTwo.initializeSpanByCode(self.tud_span_code_two)
+        self.unit_delta_test_list_one_two = [2.5, 6.7, 4.5]
+        self.unit_delta_test_list_two_two = [6.7, 7.6, 6.9]
+        self.unit_delta_test_list_three_two = [7.6, 7.8, 6.6]
+        self.unit_delta_test_list_four_two = [12.4, 23.4, 6.6]
+        self.unit_delta_test_list_five_two = [0.2, 0.5, 0.9]
+        self.unit_dict_two = {self.unit_label_one : self.unit_delta_test_list_one_two,
+                          self.unit_label_two : self.unit_delta_test_list_two_two,
+                          self.unit_label_three : self.unit_delta_test_list_three_two,
+                          self.unit_label_four : self.unit_delta_test_list_four_two,
+                          self.unit_label_five : self.unit_delta_test_list_five_two}
+        for label, list_of_prices in self.unit_dict_two.items():
+            for price in list_of_prices:
+                self.unitDeltaTestsSymbolTwo.addSpanValueByCode(self.tud_span_code, [label], close_price = price, open_price = price)
+        self.tud_span_two_unit_delta_test_list_one_two = [10.5, 8.5, 5.4]
+        self.tud_span_two_unit_delta_test_list_two_two = [5.5, 6.5, 11.9]
+        self.unit_dict_two_two = {self.tud_span_two_unit_label_one : self.tud_span_two_unit_delta_test_list_one_two,
+                                    self.tud_span_two_unit_label_two : self.tud_span_two_unit_delta_test_list_two_two}
+        for label, list_of_prices in self.unit_dict_two_two.items():
+            for price in list_of_prices:
+                self.unitDeltaTestsSymbolTwo.addSpanValueByCode(self.tud_span_code_two, [label], close_price = price, open_price = price)
+
+        self.unit_delta_test_symbol_three = 'tud_three'
+        self.unitDeltaTestsSymbolThree = self.unitDeltaTestsSymbolCollection.addSymbolToCollection(self.unit_delta_test_symbol_three)
+        self.unitDeltaTestsSymbolThree.initializeSpanByCode(self.tud_span_code)
+        self.unitDeltaTestsSymbolThree.initializeSpanByCode(self.tud_span_code_two)
+        self.unit_delta_test_list_one_three = [12.4, 15.6, 14.5]
+        self.unit_delta_test_list_two_three = [16.7, 17.6, 16.9]
+        self.unit_delta_test_list_three_three = [10.1, 11.3, 12.5]
+        self.unit_delta_test_list_four_three = [5.6, 7.8, 5.5]
+        self.unit_delta_test_list_five_three = [3.4, 4.5, 4.0]
+        self.unit_dict_three = {self.unit_label_one : self.unit_delta_test_list_one_three,
+                              self.unit_label_two : self.unit_delta_test_list_two_three,
+                              self.unit_label_three : self.unit_delta_test_list_three_three,
+                              self.unit_label_four : self.unit_delta_test_list_four_three,
+                              self.unit_label_five : self.unit_delta_test_list_five_three}
+        for label, list_of_prices in self.unit_dict_three.items():
+            for price in list_of_prices:
+                self.unitDeltaTestsSymbolThree.addSpanValueByCode(self.tud_span_code, [label], close_price = price, open_price = price)
+        self.tud_span_two_unit_delta_test_list_one_three = [8.8, 8.9, 9.4]
+        self.tud_span_two_unit_delta_test_list_two_three = [4.5, 5.5, 4.0]
+        self.unit_dict_two_three = {self.tud_span_two_unit_label_one : self.tud_span_two_unit_delta_test_list_one_three,
+                                    self.tud_span_two_unit_label_two : self.tud_span_two_unit_delta_test_list_two_three}
+        for label, list_of_prices in self.unit_dict_two_three.items():
+            for price in list_of_prices:
+                self.unitDeltaTestsSymbolThree.addSpanValueByCode(self.tud_span_code_two, [label], close_price = price, open_price = price)
+        self.expected_sorted_max_span_delta_ratio = OrderedDict()
+        self.expected_sorted_max_span_delta_ratio[self.unit_delta_test_symbol] = -3.0454545454545454
+        self.expected_sorted_max_span_delta_ratio[self.unit_delta_test_symbol_three] = -2
+        self.expected_sorted_max_span_delta_ratio[self.unit_delta_test_symbol_two] = 0.7000000000000002
+        self.expected_sorted_max_span_delta_percentage_ratio = OrderedDict()
+        self.expected_sorted_max_span_delta_percentage_ratio[self.unit_delta_test_symbol_three] = -2.2954545454545454
+        self.expected_sorted_max_span_delta_percentage_ratio[self.unit_delta_test_symbol] = -0.5622377622377622
+        self.expected_sorted_max_span_delta_percentage_ratio[self.unit_delta_test_symbol_two] = 0.038095238095238106
+        self.expected_sorted_min_span_delta_ratio = OrderedDict()
+        self.expected_sorted_min_span_delta_ratio[self.unit_delta_test_symbol_two] = -0.24137931034482762
+        self.expected_sorted_min_span_delta_ratio[self.unit_delta_test_symbol] = 4.187500000000005
+        self.expected_sorted_min_span_delta_ratio[self.unit_delta_test_symbol_three] = 48.00000000000018
+        self.expected_sorted_min_span_delta_percentage_ratio = OrderedDict()
+        self.expected_sorted_min_span_delta_percentage_ratio[self.unit_delta_test_symbol_two] = -0.28505747126436787
+        self.expected_sorted_min_span_delta_percentage_ratio[self.unit_delta_test_symbol] = 1.3809348546190652
+        self.expected_sorted_min_span_delta_percentage_ratio[self.unit_delta_test_symbol_three] = 30.545454545454657
+
+    def test_getSortedSpanDeltaValueToSpanMaxDeltaRatios(self):
+        test_sorted_max_span_delta_ratio = self.unitDeltaTestsSymbolCollection.getSortedSpanDeltaValueToSpanMaxDeltaRatios(self.tud_span_code_two, self.tud_span_code)
+        self.assertEqual(test_sorted_max_span_delta_ratio, self.expected_sorted_max_span_delta_ratio)
+        test_sorted_max_span_delta_percentage_ratio = self.unitDeltaTestsSymbolCollection.getSortedSpanDeltaValueToSpanMaxDeltaRatios(self.tud_span_code_two, self.tud_span_code, get_percentage = True)
+        self.assertEqual(test_sorted_max_span_delta_percentage_ratio, self.expected_sorted_max_span_delta_percentage_ratio)
+
+    def test_getSortedSpanDeltaValueToSpanMinDeltaRatios(self):
+        test_sorted_min_span_delta_ratio = self.unitDeltaTestsSymbolCollection.getSortedSpanDeltaValueToSpanMinDeltaRatios(self.tud_span_code_two, self.tud_span_code)
+        self.assertEqual(test_sorted_min_span_delta_ratio, self.expected_sorted_min_span_delta_ratio)
+        test_sorted_min_span_delta_percentage_ratio = self.unitDeltaTestsSymbolCollection.getSortedSpanDeltaValueToSpanMinDeltaRatios(self.tud_span_code_two, self.tud_span_code, get_percentage = True)
+        self.assertEqual(test_sorted_min_span_delta_percentage_ratio, self.expected_sorted_min_span_delta_percentage_ratio)
+
     def test_isSymbolInCollection(self):
         expected_symbol = 'A'
         newCollection = SymbolDataCollection()
