@@ -86,6 +86,9 @@ class SymbolDataCollection:
             return self.symbols_dict[symbol]
         return None
 
+    #def getSortedSpanDeltaValueToSpanMaxDeltaRatios(self, span_delta_code, span_max_delta_code):
+
+
     def getSortedSpanDeltaValuesByCode(self, span_code, unit_code = None, get_percentages = False):
         """
         :param string delta_code:

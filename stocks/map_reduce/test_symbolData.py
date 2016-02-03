@@ -57,49 +57,65 @@ class TestSymbolData(unittest.TestCase):
         self.min_unit_delta_two = -31.9
         self.min_unit_delta_percentage_two = -0.972560976
         self.min_unit_delta_label_two = self.tud_span_two_unit_label_two
+        self.empty_symbol_code = 'empty'
+        self.emptySymbol = SymbolData(self.empty_symbol_code)
+        self.emptySymbol.initializeSpanByCode(self.tud_span_code)
 
     def test_getMaxDeltaForSpan(self):
         test_max_delta_for_span_tud_one = self.unitDeltaTestsSymbol.getMaxDeltaForSpan(self.tud_span_code)
         test_max_value = test_max_delta_for_span_tud_one['delta']
         test_max_value_label = test_max_delta_for_span_tud_one['label']
-        test_min_delta_for_span_tud_one = self.unitDeltaTestsSymbol.getMinDeltaForSpan(self.tud_span_code)
-        test_min_value = round(test_min_delta_for_span_tud_one['delta'], 2)
-        test_min_value_label = test_min_delta_for_span_tud_one['label']
         self.assertEqual(test_max_value, self.max_unit_delta)
         self.assertEqual(test_max_value_label, self.max_unit_delta_label)
-        self.assertEqual(test_min_value, self.min_unit_delta)
-        self.assertEqual(test_min_value_label, self.min_unit_delta_label)
         test_max_delta_percentage = self.unitDeltaTestsSymbol.getMaxDeltaForSpan(self.tud_span_code, True)
         test_max_delta_percentage_value = round(test_max_delta_percentage['delta'], 5)
         test_max_delta_percentage_label = test_max_delta_percentage['label']
-        test_min_delta_percentage = self.unitDeltaTestsSymbol.getMinDeltaForSpan(self.tud_span_code, True)
-        test_min_delta_percentage_value = round(test_min_delta_percentage['delta'], 9)
-        test_min_delta_percentage_label = test_min_delta_percentage['label']
         self.assertEqual(test_max_delta_percentage_value, self.max_unit_delta_percentage)
         self.assertEqual(test_max_delta_percentage_label, self.max_unit_delta_percentage_label)
-        self.assertEqual(test_min_delta_percentage_value, self.min_unit_delta_percentage)
-        self.assertEqual(test_min_delta_percentage_label, self.min_unit_delta_percentage_label)
-
         test_max_delta_two = self.unitDeltaTestsSymbol.getMaxDeltaForSpan(self.tud_span_code_two)
         test_max_value_two = test_max_delta_two['delta']
         test_max_value_label_two = test_max_delta_two['label']
-        test_min_delta_two = self.unitDeltaTestsSymbol.getMinDeltaForSpan(self.tud_span_code_two)
-        test_min_value_two = round(test_min_delta_two['delta'], 2)
-        test_min_value_label_two = test_min_delta_two['label']
         self.assertEqual(test_max_value_two, self.max_unit_delta_two)
         self.assertEqual(test_max_value_label_two, self.max_unit_delta_label_two)
-        self.assertEqual(test_min_value_two, self.min_unit_delta_two)
-        self.assertEqual(test_min_value_label_two, self.min_unit_delta_label_two)
         test_max_delta_percentage_two = self.unitDeltaTestsSymbol.getMaxDeltaForSpan(self.tud_span_code_two, True)
         test_max_delta_percentage_value_two = round(test_max_delta_percentage_two['delta'], 9)
         test_max_delta_percentage_label_two = test_max_delta_percentage_two['label']
+        self.assertEqual(test_max_delta_percentage_value_two, self.max_unit_delta_percentage_two)
+        self.assertEqual(test_max_delta_percentage_label_two, self.max_unit_delta_label_two)
+        # Test empty Symbol
+        test_empty_value = self.emptySymbol.getMaxDeltaForSpan(self.tud_span_code)
+        test_value = test_empty_value['delta']
+        test_label = test_empty_value['label']
+        self.assertIsNone(test_value)
+        self.assertIsNone(test_label)
+
+    def test_getMinDeltaForSpan(self):
+        test_min_delta_for_span_tud_one = self.unitDeltaTestsSymbol.getMinDeltaForSpan(self.tud_span_code)
+        test_min_value = round(test_min_delta_for_span_tud_one['delta'], 2)
+        test_min_value_label = test_min_delta_for_span_tud_one['label']
+        self.assertEqual(test_min_value, self.min_unit_delta)
+        self.assertEqual(test_min_value_label, self.min_unit_delta_label)
+        test_min_delta_percentage = self.unitDeltaTestsSymbol.getMinDeltaForSpan(self.tud_span_code, True)
+        test_min_delta_percentage_value = round(test_min_delta_percentage['delta'], 9)
+        test_min_delta_percentage_label = test_min_delta_percentage['label']
+        self.assertEqual(test_min_delta_percentage_value, self.min_unit_delta_percentage)
+        self.assertEqual(test_min_delta_percentage_label, self.min_unit_delta_percentage_label)
+        test_min_delta_two = self.unitDeltaTestsSymbol.getMinDeltaForSpan(self.tud_span_code_two)
+        test_min_value_two = round(test_min_delta_two['delta'], 2)
+        test_min_value_label_two = test_min_delta_two['label']
+        self.assertEqual(test_min_value_two, self.min_unit_delta_two)
+        self.assertEqual(test_min_value_label_two, self.min_unit_delta_label_two)
         test_min_delta_percentage_two = self.unitDeltaTestsSymbol.getMinDeltaForSpan(self.tud_span_code_two, True)
         test_min_delta_percentage_value_two = round(test_min_delta_percentage_two['delta'], 9)
         test_min_delta_percentage_label_two = test_min_delta_percentage_two['label']
-        self.assertEqual(test_max_delta_percentage_value_two, self.max_unit_delta_percentage_two)
-        self.assertEqual(test_max_delta_percentage_label_two, self.max_unit_delta_label_two)
         self.assertEqual(test_min_delta_percentage_value_two, self.min_unit_delta_percentage_two)
         self.assertEqual(test_min_delta_percentage_label_two, self.min_unit_delta_label_two)
+        # Test empty Symbol
+        test_empty_value = self.emptySymbol.getMinDeltaForSpan(self.tud_span_code)
+        test_value = test_empty_value['delta']
+        test_label = test_empty_value['label']
+        self.assertIsNone(test_value)
+        self.assertIsNone(test_label)
 
     def test_init(self):
         expected_symbol = 'A'

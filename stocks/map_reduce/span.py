@@ -1,5 +1,6 @@
 from collections import OrderedDict
 
+
 class Span:
 
     def __init__(self, code):
@@ -28,11 +29,16 @@ class Span:
         """
         max_unit_delta = float('-inf')
         max_unit_label = None
+        max_was_found = False
         for units_label, unit_index_mapping in self.label_to_unit_index_mapping.items():
             span_delta = self.getSpanDelta(units_label, get_percentage)
             if span_delta > max_unit_delta:
                 max_unit_label = units_label
                 max_unit_delta = span_delta
+                max_was_found = True
+
+        if not(max_was_found):
+            return {'delta' : None, 'label' : None}
 
         return {'delta' : max_unit_delta, 'label' : max_unit_label}
 
@@ -44,11 +50,16 @@ class Span:
         """
         min_unit_delta = float('inf')
         min_unit_label = None
+        max_was_found = False
         for units_label, unit_index_mapping in self.label_to_unit_index_mapping.items():
             span_delta = self.getSpanDelta(units_label, get_percentage)
             if span_delta < min_unit_delta:
                 min_unit_label = units_label
                 min_unit_delta = span_delta
+                max_was_found = True
+
+        if not(max_was_found):
+            return {'delta' : None, 'label' : None}
 
         return {'delta' : min_unit_delta, 'label' : min_unit_label}
 
