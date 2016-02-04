@@ -1,6 +1,8 @@
-from dunagan_utility import sort_float_dictionary_ascending
 from collections import OrderedDict
+
+from dunagan_utility import sort_float_dictionary_ascending
 from span import Span
+
 
 class SymbolData:
     

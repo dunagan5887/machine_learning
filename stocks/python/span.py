@@ -8,6 +8,9 @@ class Span:
         self.label_to_unit_index_mapping = {}
         self.units = OrderedDict()
 
+    def getUnitsCount(self):
+        return len(self.units)
+
     def addSpanUnit(self, unit_labels_list=None, close_price = None, open_price = None, high_price = None, low_price = None, delta = None, delta_percentage = None):
         newSpanUnit = SpanUnit(close_price, open_price, high_price, low_price, delta, delta_percentage)
         unit_index = len(self.units)

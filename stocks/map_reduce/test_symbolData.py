@@ -3,6 +3,7 @@ from collections import OrderedDict
 from symbolData import SymbolData
 from symbolData import SymbolDataCollection
 
+
 class TestSymbolData(unittest.TestCase):
 
     def tearDown(self):

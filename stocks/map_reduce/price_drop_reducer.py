@@ -1,15 +1,12 @@
 #!/usr/bin/env python
 
 import sys
-from collections import OrderedDict
-from symbolData import SymbolData
-from symbolData import SymbolDataCollection
-from dunagan_utility import sort_float_dictionary_ascending
-from dunagan_utility import write_dictionary_to_file
-from dateInterval import DateInterval
-from dateInterval import DateIntervalDictionary
-from dateInterval import DateIntervalFactory
+
 from dateDelta import DateDelta
+from dateInterval import DateInterval
+from dateInterval import DateIntervalFactory
+from dunagan_utility import write_dictionary_to_file
+from symbolData import SymbolDataCollection
 
 stock_data_output_directory = '/var/machine_learning/stocks/data/stock_data/'
 
@@ -19,7 +16,8 @@ today_date = '2016-01-19'
 symbol_collection_span_code = 'crash_plus_12_periods_leading_up'
 
 days_between_dates = DateDelta.getDaysBetweenDateStrings(date_to_track_from, today_date)
-dateIntervalDictionary = DateIntervalFactory.getDateIntervalDictionary(date_to_track_from, days_between_dates, 12, 'days', dictionary_code = 'leading_up_to_crash')
+interval_count = 12
+dateIntervalDictionary = DateIntervalFactory.getDateIntervalDictionary(date_to_track_from, days_between_dates, interval_count, 'days', dictionary_code = 'leading_up_to_crash')
 
 since_crash_interval_code = 'since_crash'
 betweenCrashDatesInterval = DateInterval(date_to_track_from, today_date, since_crash_interval_code)
@@ -32,6 +30,7 @@ auxiliaryIntervals = {since_crash_interval_code : betweenCrashDatesInterval, thr
                       one_year_span_code : oneYearDateInterval}
 
 price_threshold = 3.0
+past_year_days_threshold = float(days_between_dates) * (5.0/7.0) * interval_count
 
 def initializeNewSymbol(symbol, symbolCollectionInstance):
     """
@@ -124,6 +123,12 @@ sorted_symbol_percentage_off_year_average_above_price_threshold = symbolCollecti
 sorted_symbol_since_crash_delta_to_min_delta_ratio = symbolCollectionInstance.getSortedSpanDeltaValueToSpanMinDeltaRatios(since_crash_interval_code, symbol_collection_span_code)
 sorted_symbol_since_crash_delta_to_min_delta_percentage_ratio = symbolCollectionInstance.getSortedSpanDeltaValueToSpanMinDeltaRatios(since_crash_interval_code, symbol_collection_span_code, get_percentage = True)
 
+sorted_symbol_since_crash_delta_to_min_delta_ratio_above_count_threshold = symbolCollectionInstance.getSortedDictionaryOfSymbolsWithSpanUnitCountAboveThreshold(sorted_symbol_since_crash_delta_to_min_delta_ratio, symbol_collection_span_code, past_year_days_threshold)
+sorted_symbol_since_crash_delta_to_min_delta_percentage_ratio_above_count_threshold = symbolCollectionInstance.getSortedDictionaryOfSymbolsWithSpanUnitCountAboveThreshold(sorted_symbol_since_crash_delta_to_min_delta_percentage_ratio, symbol_collection_span_code, past_year_days_threshold)
+
+sorted_symbol_since_crash_delta_to_min_delta_ratio_above_count_and_price_threshold = symbolCollectionInstance.getSortedDictionaryOfValuesAboveTodayPriceThreshold(sorted_symbol_since_crash_delta_to_min_delta_ratio_above_count_threshold, price_threshold)
+sorted_symbol_since_crash_delta_to_min_delta_percentage_ratio_above_count_and_price_threshold = symbolCollectionInstance.getSortedDictionaryOfValuesAboveTodayPriceThreshold(sorted_symbol_since_crash_delta_to_min_delta_percentage_ratio_above_count_threshold, price_threshold)
+
 write_dictionary_to_file(sorted_symbol_price_deltas, stock_data_output_directory + 'price_deltas.csv')
 write_dictionary_to_file(sorted_symbol_price_delta_percentages, stock_data_output_directory + 'delta_percentages.csv')
 write_dictionary_to_file(sorted_symbol_percentage_off_three_month_average, stock_data_output_directory + 'three_month_percentage_deltas.csv')
@@ -132,3 +137,7 @@ write_dictionary_to_file(sorted_symbol_percentage_off_year_average, stock_data_o
 write_dictionary_to_file(sorted_symbol_percentage_off_year_average_above_price_threshold, stock_data_output_directory + 'one_year_percentage_deltas_above_threshold.csv')
 write_dictionary_to_file(sorted_symbol_since_crash_delta_to_min_delta_ratio, stock_data_output_directory + 'symbol_delta_ratio_since_crash.csv')
 write_dictionary_to_file(sorted_symbol_since_crash_delta_to_min_delta_percentage_ratio, stock_data_output_directory + 'symbol_delta_percentage_ratio_since_crash.csv')
+write_dictionary_to_file(sorted_symbol_since_crash_delta_to_min_delta_ratio_above_count_threshold, stock_data_output_directory + 'symbol_delta_ratio_since_crash_above_days_threshold.csv')
+write_dictionary_to_file(sorted_symbol_since_crash_delta_to_min_delta_percentage_ratio_above_count_threshold, stock_data_output_directory + 'symbol_delta_percentage_ratio_since_crash_above_days_threshold.csv')
+write_dictionary_to_file(sorted_symbol_since_crash_delta_to_min_delta_ratio_above_count_and_price_threshold, stock_data_output_directory + 'symbol_delta_ratio_since_crash_above_days_and_price_threshold.csv')
+write_dictionary_to_file(sorted_symbol_since_crash_delta_to_min_delta_percentage_ratio_above_count_and_price_threshold, stock_data_output_directory + 'symbol_delta_percentage_ratio_since_crash_above_days_and_price_threshold.csv')

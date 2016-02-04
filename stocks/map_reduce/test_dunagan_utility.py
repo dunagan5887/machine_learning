@@ -2,6 +2,7 @@ import unittest
 from collections import OrderedDict
 from dunagan_utility import write_dictionary_to_file
 
+
 class TestDunaganUtility(unittest.TestCase):
 
     def test_write_dictionary_to_file(self):

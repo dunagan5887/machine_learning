@@ -1,7 +1,6 @@
-from span import Span
-from span import SpanUnit
-
 import unittest
+
+from span import Span
 
 
 class TestSpan(unittest.TestCase):
@@ -59,6 +58,11 @@ class TestSpan(unittest.TestCase):
         for value in self.zero_average_test_span_list:
             self.zeroTestsSpan.addSpanUnit([self.zero_average_test_span_code], value, value)
 
+    def test_getUnitsCount(self):
+        self.assertEqual(self.zeroTestsSpan.getUnitsCount(), 12)
+        self.assertEqual(self.emptySpan.getUnitsCount(), 0)
+        self.assertEqual(self.unitDeltaTestsSpan.getUnitsCount(), 15)
+
     def test_getSpanDelta(self):
         test_zero_delta_span_delta = self.zeroTestsSpan.getSpanDelta(self.zero_delta_span_code)
         self.assertEqual(test_zero_delta_span_delta, 0.0)
@@ -82,7 +86,7 @@ class TestSpan(unittest.TestCase):
         self.assertEqual(test_max_unit_delta_percentage_value_label, self.max_unit_delta_percentage_label)
 
     def test_getMaxUnitDeltaValue(self):
-        test_max_unit_delta_value_explicit = self.unitDeltaTestsSpan.getMaxUnitDeltaValue(cd
+        test_max_unit_delta_value_explicit = self.unitDeltaTestsSpan.getMaxUnitDeltaValue()
         self.assertEqual(test_max_unit_delta_value_explicit, self.max_unit_delta)
         test_max_unit_delta_percentage_value_explicit = round(self.unitDeltaTestsSpan.getMaxUnitDeltaValue(True), 5)
         self.assertEqual(test_max_unit_delta_percentage_value_explicit, self.max_unit_delta_percentage)
