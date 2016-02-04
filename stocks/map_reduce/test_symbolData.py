@@ -7,6 +7,7 @@ class TestSymbolData(unittest.TestCase):
 
     def tearDown(self):
         self.unitDeltaTestsSymbol = None
+        self.emptySymbol = None
 
     def setUp(self):
         self.unit_delta_test_symbol = 'tud'
@@ -66,17 +67,42 @@ class TestSymbolData(unittest.TestCase):
         self.emptySymbol = SymbolData(self.empty_symbol_code)
         self.emptySymbol.initializeSpanByCode(self.tud_span_code)
 
+        self.zero_delta_span_code = 'zero_delta'
+        self.zero_delta_span = [1.34, 5.6, -3.5, -0.3, 1.34]
+        self.zero_delta_span_off_average_test_value = 1.56
+        self.unitDeltaTestsSymbol.initializeSpanByCode(self.zero_delta_span_code)
+        for value in self.zero_delta_span:
+            self.unitDeltaTestsSymbol.addSpanValueByCode(self.zero_delta_span_code, self.zero_delta_span_code, close_price = value, open_price = value)
+        self.expected_percentage_delta_off_zero_delta_span_average = 0.7410714285714288
+
+        self.zero_average_span_code = 'zero_average'
+        self.zero_average_span = [1.34, 0.45, -1.65, -1.54, 1.4]
+        self.unitDeltaTestsSymbol.initializeSpanByCode(self.zero_average_span_code)
+        for value in self.zero_average_span:
+            self.unitDeltaTestsSymbol.addSpanValueByCode(self.zero_average_span_code, self.zero_average_span_code, close_price = value, open_price = value)
+        self.expected_percentage_delta_off_zero_delta_span_average = 0.7410714285714288
+
+    def test_getPercentageDeltaOffSpanAverage(self):
+        test_percentage_delta_off_zero_delta_span_average = self.unitDeltaTestsSymbol.getPercentageDeltaOffSpanAverage(self.zero_delta_span_code, self.zero_delta_span_off_average_test_value)
+        self.assertEqual(test_percentage_delta_off_zero_delta_span_average, self.expected_percentage_delta_off_zero_delta_span_average)
+        test_percentage_delta_off_zero_average_span_average = self.unitDeltaTestsSymbol.getPercentageDeltaOffSpanAverage(self.zero_average_span_code, self.zero_delta_span_off_average_test_value)
+        self.assertEqual(test_percentage_delta_off_zero_average_span_average, float("inf"))
+
     def test_getSpanDeltaValueToSpanMaxDeltaRatio(self):
         test_max_ratio = round(self.unitDeltaTestsSymbol.getSpanDeltaValueToSpanMaxDeltaRatio(self.tud_span_code_two, self.tud_span_code), 9)
         self.assertEqual(test_max_ratio, self.expected_span_delta_value_to_span_max_delta_ratio)
         test_max_ratio_percentage = round(self.unitDeltaTestsSymbol.getSpanDeltaValueToSpanMaxDeltaRatio(self.tud_span_code_two, self.tud_span_code, True), 5)
         self.assertEqual(test_max_ratio_percentage, self.expected_span_delta_value_to_span_max_delta_percentage_ratio)
+        test_percentage_delta_off_zero_delta_span_average = self.unitDeltaTestsSymbol.getSpanDeltaValueToSpanMaxDeltaRatio(self.tud_span_code_two, self.zero_delta_span_code)
+        self.assertEqual(test_percentage_delta_off_zero_delta_span_average, float("inf"))
 
     def test_getSpanDeltaValueToSpanMinDeltaRatio(self):
         test_min_ratio = round(self.unitDeltaTestsSymbol.getSpanDeltaValueToSpanMinDeltaRatio(self.tud_span_code_two, self.tud_span_code), 4)
         self.assertEqual(test_min_ratio, self.expected_span_delta_value_to_span_min_delta_ratio)
         test_min_ratio_percentage = round(self.unitDeltaTestsSymbol.getSpanDeltaValueToSpanMinDeltaRatio(self.tud_span_code_two, self.tud_span_code, True), 5)
         self.assertEqual(test_min_ratio_percentage, self.expected_span_delta_value_to_span_min_delta_percentage_ratio)
+        test_percentage_delta_off_zero_delta_span_average = self.unitDeltaTestsSymbol.getSpanDeltaValueToSpanMinDeltaRatio(self.tud_span_code_two, self.zero_delta_span_code)
+        self.assertEqual(test_percentage_delta_off_zero_delta_span_average, float("inf"))
 
     def test_getMaxDeltaForSpan(self):
         test_max_delta_for_span_tud_one = self.unitDeltaTestsSymbol.getMaxDeltaForSpan(self.tud_span_code)
@@ -204,6 +230,8 @@ class TestSymbolData(unittest.TestCase):
         test_delta_off_odd_average = round(test_delta_off_odd_average, 5)
         self.assertEqual(expected_off_even_average_value, test_delta_off_even_average)
         self.assertEqual(expected_off_odd_average_value, test_delta_off_odd_average)
+
+
 
     def test_getSpanDeltaByCode(self):
         testSymbolData = SymbolData('A')
@@ -435,6 +463,8 @@ class TestSymbolDataCollection(unittest.TestCase):
         second_span_prices = [2.3, 2.7, 3.3]
         third_today_price = 1.2
         third_span_prices = [4.6, 2.7, 5.6]
+        fourth_today_price = 3.4
+        fourth_span_prices = [-2.0, 0.0, 2.0]
         firstSymbolData = testCollection.addSymbolToCollection('A')
         firstSymbolData.setTodayPrice(first_today_price)
         firstSymbolData.initializeSpanByCode(test_span_code)

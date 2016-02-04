@@ -110,7 +110,13 @@ class Span:
         close_price = lastUnit.close_price
         if (not(open_price is None) and not(close_price is None)):
             delta = close_price - open_price
-            return delta if not(get_percentage_delta) else (delta / abs(open_price))
+            if not(get_percentage_delta):
+                return delta
+            if open_price != 0.0:
+                return (delta / abs(open_price))
+            if close_price == 0.0:
+                return 0.0
+            return float("inf")
         return None
 
     def getSpanCloseAverage(self, units_label = None):

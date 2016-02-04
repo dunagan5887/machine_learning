@@ -11,6 +11,9 @@ class TestSpan(unittest.TestCase):
         self.testSpan = None
 
     def setUp(self):
+        self.empty_span_code = 'empty_span'
+        self.emptySpan = Span(self.empty_span_code)
+
         self.span_code = 'test_span'
         self.testSpan = Span(self.span_code)
         self.unitDeltaTestsSpan = Span('unit_delta_tests_span')
@@ -41,6 +44,31 @@ class TestSpan(unittest.TestCase):
         self.min_unit_delta_percentage = -0.678571429
         self.min_unit_delta_percentage_label = self.unit_label_two
 
+        self.zero_tests_span_code = 'zero_tests'
+        self.zeroTestsSpan =  Span(self.zero_tests_span_code)
+        self.zero_delta_span_code = 'zero_delta'
+        self.zero_delta_span_list = [0.0, 3.1, 4.4, 0.0]
+        for value in self.zero_delta_span_list:
+            self.zeroTestsSpan.addSpanUnit([self.zero_delta_span_code], value, value)
+        self.zero_delta_non_zero_close_span_code = 'zero_delta_non_zero_close'
+        self.zero_delta_non_zero_close_span_list = [0.0, 3.1, 4.4, 2.0]
+        for value in self.zero_delta_non_zero_close_span_list:
+            self.zeroTestsSpan.addSpanUnit([self.zero_delta_non_zero_close_span_code], value, value)
+        self.zero_average_test_span_code = 'zero_span_close_average'
+        self.zero_average_test_span_list = [0.0, -1.0, -1.0, 2.0]
+        for value in self.zero_average_test_span_list:
+            self.zeroTestsSpan.addSpanUnit([self.zero_average_test_span_code], value, value)
+
+    def test_getSpanDelta(self):
+        test_zero_delta_span_delta = self.zeroTestsSpan.getSpanDelta(self.zero_delta_span_code)
+        self.assertEqual(test_zero_delta_span_delta, 0.0)
+        test_zero_delta_span_delta_percentage = self.zeroTestsSpan.getSpanDelta(self.zero_delta_span_code, get_percentage_delta = True)
+        self.assertEqual(test_zero_delta_span_delta_percentage, 0.0)
+        test_zero_delta_non_zero_close_span_delta = self.zeroTestsSpan.getSpanDelta(self.zero_delta_non_zero_close_span_code)
+        self.assertEqual(test_zero_delta_non_zero_close_span_delta, 2.0)
+        test_zero_delta_non_zero_close_span_delta_percentage = self.zeroTestsSpan.getSpanDelta(self.zero_delta_non_zero_close_span_code, get_percentage_delta = True)
+        self.assertEqual(test_zero_delta_non_zero_close_span_delta_percentage, float("inf"))
+
     def test_getMaxUnitDelta(self):
         test_max_unit_delta = self.unitDeltaTestsSpan.getMaxUnitDelta()
         test_max_unit_delta_value = test_max_unit_delta['delta']
@@ -54,7 +82,7 @@ class TestSpan(unittest.TestCase):
         self.assertEqual(test_max_unit_delta_percentage_value_label, self.max_unit_delta_percentage_label)
 
     def test_getMaxUnitDeltaValue(self):
-        test_max_unit_delta_value_explicit = self.unitDeltaTestsSpan.getMaxUnitDeltaValue()
+        test_max_unit_delta_value_explicit = self.unitDeltaTestsSpan.getMaxUnitDeltaValue(cd
         self.assertEqual(test_max_unit_delta_value_explicit, self.max_unit_delta)
         test_max_unit_delta_percentage_value_explicit = round(self.unitDeltaTestsSpan.getMaxUnitDeltaValue(True), 5)
         self.assertEqual(test_max_unit_delta_percentage_value_explicit, self.max_unit_delta_percentage)
@@ -81,7 +109,7 @@ class TestSpan(unittest.TestCase):
         self.assertEquals(self.span_code, self.testSpan.code, 'The code returned from a Span object does not match the code used to initialize the object')
 
     def test_addSpanUnit(self):
-        span_delta = self.testSpan.getSpanDelta()
+        span_delta = self.emptySpan.getSpanDelta()
         self.assertIsNone(span_delta)
         first_unit_label = 'first_unit'
         second_unit_label = 'second_unit'

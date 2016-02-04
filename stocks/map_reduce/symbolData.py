@@ -29,7 +29,10 @@ class SymbolData:
         if span_average is None:
             return None
         delta = price_to_compare - span_average
-        delta_percentage = delta / span_average
+        if span_average != 0.0:
+            delta_percentage = delta / span_average
+        else:
+            delta_percentage = float("inf")
         return delta_percentage
 
     def getSpanAverageByCode(self, span_code, units_code = None):
@@ -89,7 +92,9 @@ class SymbolData:
         span_delta_value = self.getSpanDeltaByCode(span_delta_code, get_percentage = get_percentage)
         span_max_delta_value = self.getMaxDeltaForSpanValue(span_max_delta_code, get_percentage = get_percentage)
         if (not(span_delta_value is None) and not(span_max_delta_value is None)):
-            return float(span_delta_value) / span_max_delta_value
+            if (span_max_delta_value != 0.0):
+                return float(span_delta_value) / span_max_delta_value
+            return float("inf")
         return None
 
     def getSpanDeltaValueToSpanMinDeltaRatio(self, span_delta_code, span_min_delta_code, get_percentage = False):
@@ -101,7 +106,9 @@ class SymbolData:
         span_delta_value = self.getSpanDeltaByCode(span_delta_code, get_percentage = get_percentage)
         span_min_delta_value = self.getMinDeltaForSpanValue(span_min_delta_code, get_percentage = get_percentage)
         if (not(span_delta_value is None) and not(span_min_delta_value is None)):
-            return float(span_delta_value) / span_min_delta_value
+            if span_min_delta_value != 0.0:
+                return float(span_delta_value) / span_min_delta_value
+            return float("inf")
         return None
 
 class SymbolDataCollection:
@@ -188,7 +195,10 @@ class SymbolDataCollection:
             if ((symbol_average_for_span is None) or (today_price_for_symbol is None)):
                 continue
             today_price_delta_off_average = today_price_for_symbol - symbol_average_for_span
-            today_price_percentage_off_delta = today_price_delta_off_average / symbol_average_for_span
+            if symbol_average_for_span != 0.0:
+                today_price_percentage_off_delta = today_price_delta_off_average / symbol_average_for_span
+            else:
+                today_price_percentage_off_delta = float("inf")
             span_today_price_off_average_values_by_symbol[symbol] = today_price_percentage_off_delta
         sorted_span_today_price_off_average_values_by_symbol = sort_float_dictionary_ascending(span_today_price_off_average_values_by_symbol)
         return sorted_span_today_price_off_average_values_by_symbol
