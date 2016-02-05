@@ -1,3 +1,4 @@
+from sys import maxint
 from collections import OrderedDict
 
 from dunagan_utility import sort_float_dictionary_ascending
@@ -10,6 +11,13 @@ class SymbolData:
         self.symbol = symbol
         self.today_price = None
         self.spans = {}
+
+    def getSpanByCode(self, span_code):
+        return self.spans[span_code]
+
+    def getSpanUnitCount(self, span_code):
+        span = self.spans[span_code]
+        return span.getUnitsCount()
 
     def setTodayPrice(self, today_price):
         self.today_price = today_price
@@ -204,6 +212,55 @@ class SymbolDataCollection:
             span_today_price_off_average_values_by_symbol[symbol] = today_price_percentage_off_delta
         sorted_span_today_price_off_average_values_by_symbol = sort_float_dictionary_ascending(span_today_price_off_average_values_by_symbol)
         return sorted_span_today_price_off_average_values_by_symbol
+
+    def getSymbolSpanValueVectors(self, span_code, field, only_vectors_at_max_length = True):
+        """
+        :param string span_code:
+        :param string field:
+        :param bool only_vectors_at_max_length:
+        :return: dict
+        """
+        if only_vectors_at_max_length:
+            value_vectors_by_length = {}
+            symbol_vectors_by_length = {}
+            max_vector_length = -maxint - 1
+        value_vectors = []
+        symbols_vector = []
+
+        for symbol, symbol_value in self.symbols_dict.items():
+            symbolDataInstance = self.getSymbolData(symbol)
+            symbolSpan = symbolDataInstance.getSpanByCode(span_code)
+            symbol_span_unit_values = symbolSpan.getUnitFieldValuesAsList(field)
+
+            if only_vectors_at_max_length:
+                length_of_unit_values = len(symbol_span_unit_values)
+                if not(length_of_unit_values in value_vectors_by_length):
+                    value_vectors_by_length[length_of_unit_values] = []
+                    symbol_vectors_by_length[length_of_unit_values] = []
+                value_vectors_by_length[length_of_unit_values].append(symbol_span_unit_values)
+                symbol_vectors_by_length[length_of_unit_values].append(symbol)
+                if length_of_unit_values > max_vector_length:
+                    max_vector_length = length_of_unit_values
+            else:
+                value_vectors.append(symbol_span_unit_values)
+                symbols_vector.append(symbol)
+
+        if only_vectors_at_max_length:
+            value_vectors = value_vectors_by_length[max_vector_length]
+            symbols_vector = symbol_vectors_by_length[max_vector_length]
+
+        return {'symbols_list' : symbols_vector, 'value_vectors' : value_vectors}
+
+
+    def getSortedDictionaryOfSymbolsWithSpanUnitCountAboveThreshold(self, sorted_dictionary, span_code, past_year_days_threshold):
+        sorted_dictionary_above_threshold = OrderedDict()
+        for symbol, symbol_value in sorted_dictionary.items():
+            symbolDataInstance = self.getSymbolData(symbol)
+            if not(symbolDataInstance is None):
+                span_unit_count = symbolDataInstance.getSpanUnitCount(span_code)
+                if (span_unit_count >= past_year_days_threshold):
+                    sorted_dictionary_above_threshold[symbol] = symbol_value
+        return sorted_dictionary_above_threshold
 
     def getSortedDictionaryOfValuesAboveTodayPriceThreshold(self, sorted_dictionary, price_threshold):
         sorted_dictionary_above_threshold = OrderedDict()

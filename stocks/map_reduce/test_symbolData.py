@@ -1,4 +1,5 @@
 import unittest
+import copy
 from collections import OrderedDict
 from symbolData import SymbolData
 from symbolData import SymbolDataCollection
@@ -82,6 +83,24 @@ class TestSymbolData(unittest.TestCase):
         for value in self.zero_average_span:
             self.unitDeltaTestsSymbol.addSpanValueByCode(self.zero_average_span_code, self.zero_average_span_code, close_price = value, open_price = value)
         self.expected_percentage_delta_off_zero_delta_span_average = 0.7410714285714288
+
+    def test_getSpanByCode(self):
+        zero_delta_span = self.unitDeltaTestsSymbol.getSpanByCode(self.zero_delta_span_code)
+        self.assertEqual(self.zero_delta_span_code, zero_delta_span.code)
+        self.assertEqual(zero_delta_span.getUnitsCount(), 5)
+        tudSpan = self.unitDeltaTestsSymbol.getSpanByCode(self.tud_span_code)
+        self.assertEqual(self.tud_span_code, tudSpan.code)
+        self.assertEqual(15, tudSpan.getUnitsCount())
+        tudSpanTwo = self.unitDeltaTestsSymbol.getSpanByCode(self.tud_span_code_two)
+        self.assertEqual(self.tud_span_code_two, tudSpanTwo.code)
+        self.assertEqual(6, tudSpanTwo.getUnitsCount())
+
+    def test_getSpanUnitCount(self):
+        self.assertEqual(self.unitDeltaTestsSymbol.getSpanUnitCount(self.zero_delta_span_code), 5)
+        self.assertEqual(self.unitDeltaTestsSymbol.getSpanUnitCount(self.zero_average_span_code), 5)
+        self.assertEqual(self.unitDeltaTestsSymbol.getSpanUnitCount(self.tud_span_code), 15)
+        self.assertEqual(self.unitDeltaTestsSymbol.getSpanUnitCount(self.tud_span_code_two), 6)
+        self.assertEqual(self.emptySymbol.getSpanUnitCount(self.tud_span_code), 0)
 
     def test_getPercentageDeltaOffSpanAverage(self):
         test_percentage_delta_off_zero_delta_span_average = self.unitDeltaTestsSymbol.getPercentageDeltaOffSpanAverage(self.zero_delta_span_code, self.zero_delta_span_off_average_test_value)
@@ -280,6 +299,8 @@ class TestSymbolDataCollection(unittest.TestCase):
         self.unitDeltaTestsSymbol = None
 
     def setUp(self):
+        self.get_symbol_span_value_vectors_all_length_list_dict = {}
+
         self.unitDeltaTestsSymbolCollection = SymbolDataCollection()
         self.unit_delta_test_symbol = 'tud'
         self.unitDeltaTestsSymbolOne = self.unitDeltaTestsSymbolCollection.addSymbolToCollection(self.unit_delta_test_symbol)
@@ -300,9 +321,11 @@ class TestSymbolDataCollection(unittest.TestCase):
                           self.unit_label_three : self.unit_delta_test_list_three,
                           self.unit_label_four : self.unit_delta_test_list_four,
                           self.unit_label_five : self.unit_delta_test_list_five}
+        self.get_symbol_span_value_vectors_all_length_list_dict[self.unit_delta_test_symbol] = list()
         for label, list_of_prices in self.unit_dict.items():
             for price in list_of_prices:
                 self.unitDeltaTestsSymbolOne.addSpanValueByCode(self.tud_span_code, [label], close_price = price, open_price = price)
+                self.get_symbol_span_value_vectors_all_length_list_dict[self.unit_delta_test_symbol].append(price)
         self.tud_span_code_two = 'tud_span_two'
         self.tud_span_two_unit_label_one = 'span_two_unit_one'
         self.tud_span_two_unit_delta_test_list_one = [14.3, 13.4, 115.1]
@@ -329,9 +352,12 @@ class TestSymbolDataCollection(unittest.TestCase):
                           self.unit_label_three : self.unit_delta_test_list_three_two,
                           self.unit_label_four : self.unit_delta_test_list_four_two,
                           self.unit_label_five : self.unit_delta_test_list_five_two}
+        self.get_symbol_span_value_vectors_all_length_list_dict[self.unit_delta_test_symbol_two] = list()
         for label, list_of_prices in self.unit_dict_two.items():
             for price in list_of_prices:
                 self.unitDeltaTestsSymbolTwo.addSpanValueByCode(self.tud_span_code, [label], close_price = price, open_price = price)
+                self.get_symbol_span_value_vectors_all_length_list_dict[self.unit_delta_test_symbol_two].append(price)
+
         self.tud_span_two_unit_delta_test_list_one_two = [10.5, 8.5, 5.4]
         self.tud_span_two_unit_delta_test_list_two_two = [5.5, 6.5, 11.9]
         self.unit_dict_two_two = {self.tud_span_two_unit_label_one : self.tud_span_two_unit_delta_test_list_one_two,
@@ -354,9 +380,12 @@ class TestSymbolDataCollection(unittest.TestCase):
                               self.unit_label_three : self.unit_delta_test_list_three_three,
                               self.unit_label_four : self.unit_delta_test_list_four_three,
                               self.unit_label_five : self.unit_delta_test_list_five_three}
+        self.get_symbol_span_value_vectors_all_length_list_dict[self.unit_delta_test_symbol_three] = list()
         for label, list_of_prices in self.unit_dict_three.items():
             for price in list_of_prices:
                 self.unitDeltaTestsSymbolThree.addSpanValueByCode(self.tud_span_code, [label], close_price = price, open_price = price)
+                self.get_symbol_span_value_vectors_all_length_list_dict[self.unit_delta_test_symbol_three].append(price)
+
         self.tud_span_two_unit_delta_test_list_one_three = [8.8, 8.9, 9.4]
         self.tud_span_two_unit_delta_test_list_two_three = [4.5, 5.5, 4.0]
         self.unit_dict_two_three = {self.tud_span_two_unit_label_one : self.tud_span_two_unit_delta_test_list_one_three,
@@ -380,6 +409,70 @@ class TestSymbolDataCollection(unittest.TestCase):
         self.expected_sorted_min_span_delta_percentage_ratio[self.unit_delta_test_symbol_two] = -0.28505747126436787
         self.expected_sorted_min_span_delta_percentage_ratio[self.unit_delta_test_symbol] = 1.3809348546190652
         self.expected_sorted_min_span_delta_percentage_ratio[self.unit_delta_test_symbol_three] = 30.545454545454657
+
+        self.symbol_span_value_vectors_test_span = 'symbol_span_value_vectors_test'
+        self.spanValueVectorsTestSymbol = self.unitDeltaTestsSymbolCollection.addSymbolToCollection(self.symbol_span_value_vectors_test_span)
+        self.spanValueVectorsTestSymbol.initializeSpanByCode(self.tud_span_code)
+        self.spanValueVectorsTestSymbol.initializeSpanByCode(self.tud_span_code_two)
+        self.symbol_span_value_vectors_test_open_prices = [1.0, 2.0, 3.0, 4.0]
+        self.symbol_span_value_vectors_test_close_prices = [5.0, 6.0, 7.0]
+
+        self.get_symbol_span_value_vectors_open_price_all_length_list_dict = copy.deepcopy(self.get_symbol_span_value_vectors_all_length_list_dict)
+        self.get_symbol_span_value_vectors_close_price_all_length_list_dict = copy.deepcopy(self.get_symbol_span_value_vectors_all_length_list_dict)
+        self.get_symbol_span_value_vectors_open_price_max_length_list_dict = copy.deepcopy(self.get_symbol_span_value_vectors_all_length_list_dict)
+        self.get_symbol_span_value_vectors_close_price_max_length_list_dict = copy.deepcopy(self.get_symbol_span_value_vectors_all_length_list_dict)
+
+        self.get_symbol_span_value_vectors_open_price_all_length_list_dict[self.symbol_span_value_vectors_test_span] = list()
+        self.get_symbol_span_value_vectors_close_price_all_length_list_dict[self.symbol_span_value_vectors_test_span] = list()
+
+        for price in self.symbol_span_value_vectors_test_open_prices:
+            self.spanValueVectorsTestSymbol.addSpanValueByCode(self.tud_span_code, [], open_price = price)
+            self.get_symbol_span_value_vectors_open_price_all_length_list_dict[self.symbol_span_value_vectors_test_span].append(price)
+
+        for price in self.symbol_span_value_vectors_test_close_prices:
+            self.spanValueVectorsTestSymbol.addSpanValueByCode(self.tud_span_code, [], close_price = price)
+            self.get_symbol_span_value_vectors_close_price_all_length_list_dict[self.symbol_span_value_vectors_test_span].append(price)
+
+    def test_getSymbolSpanValueVectors(self):
+        test_all_open_price_values_list_dict = self.unitDeltaTestsSymbolCollection.getSymbolSpanValueVectors(self.tud_span_code, 'open_price', only_vectors_at_max_length = False)
+        test_all_open_price_values_list_value = test_all_open_price_values_list_dict['value_vectors']
+        test_all_open_price_values_list = test_all_open_price_values_list_dict['symbols_list']
+        index = 0
+        for symbol in test_all_open_price_values_list:
+            test_value_vector = test_all_open_price_values_list_value[index]
+            expected_value_vector = self.get_symbol_span_value_vectors_open_price_all_length_list_dict[symbol]
+            self.assertEqual(test_value_vector, expected_value_vector)
+            index += 1
+
+        test_all_close_price_values_list_dict = self.unitDeltaTestsSymbolCollection.getSymbolSpanValueVectors(self.tud_span_code, 'close_price', only_vectors_at_max_length = False)
+        test_all_close_price_values_list_value = test_all_close_price_values_list_dict['value_vectors']
+        test_all_close_price_values_list = test_all_close_price_values_list_dict['symbols_list']
+        index = 0
+        for symbol in test_all_close_price_values_list:
+            test_value_vector = test_all_close_price_values_list_value[index]
+            expected_value_vector = self.get_symbol_span_value_vectors_close_price_all_length_list_dict[symbol]
+            self.assertEqual(test_value_vector, expected_value_vector)
+            index += 1
+
+        test_max_open_price_values_list_dict = self.unitDeltaTestsSymbolCollection.getSymbolSpanValueVectors(self.tud_span_code, 'open_price', only_vectors_at_max_length = True)
+        test_max_open_price_values_list_value = test_max_open_price_values_list_dict['value_vectors']
+        test_max_open_price_values_list = test_max_open_price_values_list_dict['symbols_list']
+        index = 0
+        for symbol in test_max_open_price_values_list:
+            test_value_vector = test_max_open_price_values_list_value[index]
+            expected_value_vector = self.get_symbol_span_value_vectors_open_price_max_length_list_dict[symbol]
+            self.assertEqual(test_value_vector, expected_value_vector)
+            index += 1
+
+        test_max_close_price_values_list_dict = self.unitDeltaTestsSymbolCollection.getSymbolSpanValueVectors(self.tud_span_code, 'close_price', only_vectors_at_max_length = True)
+        test_max_close_price_values_list_value = test_max_close_price_values_list_dict['value_vectors']
+        test_max_close_price_values_list = test_max_close_price_values_list_dict['symbols_list']
+        index = 0
+        for symbol in test_max_close_price_values_list:
+            test_value_vector = test_max_close_price_values_list_value[index]
+            expected_value_vector = self.get_symbol_span_value_vectors_close_price_max_length_list_dict[symbol]
+            self.assertEqual(test_value_vector, expected_value_vector)
+            index += 1
 
     def test_getSortedSpanDeltaValueToSpanMaxDeltaRatios(self):
         test_sorted_max_span_delta_ratio = self.unitDeltaTestsSymbolCollection.getSortedSpanDeltaValueToSpanMaxDeltaRatios(self.tud_span_code_two, self.tud_span_code)

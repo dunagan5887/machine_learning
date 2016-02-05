@@ -11,6 +11,14 @@ class Span:
     def getUnitsCount(self):
         return len(self.units)
 
+    def getUnitFieldValuesAsList(self, field):
+        list_to_return = []
+        for key, spanUnit in self.units.iteritems():
+            field_value = getattr(spanUnit, field)
+            if not(field_value is None):
+                list_to_return.append(field_value)
+        return list_to_return
+
     def addSpanUnit(self, unit_labels_list=None, close_price = None, open_price = None, high_price = None, low_price = None, delta = None, delta_percentage = None):
         newSpanUnit = SpanUnit(close_price, open_price, high_price, low_price, delta, delta_percentage)
         unit_index = len(self.units)

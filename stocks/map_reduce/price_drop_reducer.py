@@ -8,6 +8,8 @@ from dateInterval import DateIntervalFactory
 from dunagan_utility import write_dictionary_to_file
 from symbolData import SymbolDataCollection
 
+import pickle
+
 stock_data_output_directory = '/var/machine_learning/stocks/data/stock_data/'
 
 date_to_track_from = '2015-12-29'
@@ -141,3 +143,7 @@ write_dictionary_to_file(sorted_symbol_since_crash_delta_to_min_delta_ratio_abov
 write_dictionary_to_file(sorted_symbol_since_crash_delta_to_min_delta_percentage_ratio_above_count_threshold, stock_data_output_directory + 'symbol_delta_percentage_ratio_since_crash_above_days_threshold.csv')
 write_dictionary_to_file(sorted_symbol_since_crash_delta_to_min_delta_ratio_above_count_and_price_threshold, stock_data_output_directory + 'symbol_delta_ratio_since_crash_above_days_and_price_threshold.csv')
 write_dictionary_to_file(sorted_symbol_since_crash_delta_to_min_delta_percentage_ratio_above_count_and_price_threshold, stock_data_output_directory + 'symbol_delta_percentage_ratio_since_crash_above_days_and_price_threshold.csv')
+
+symbol_collection_file = open(stock_data_output_directory + 'cached_symbol_collection.txt', 'w')
+pickle.dump(symbolCollectionInstance, symbol_collection_file)
+symbol_collection_file.close()

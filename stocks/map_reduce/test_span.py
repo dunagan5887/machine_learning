@@ -31,9 +31,11 @@ class TestSpan(unittest.TestCase):
                           self.unit_label_three : self.unit_delta_test_list_three,
                           self.unit_label_four : self.unit_delta_test_list_four,
                           self.unit_label_five : self.unit_delta_test_list_five}
+        self.expected_delta_tests_units_as_list = []
         for label, list_of_prices in self.unit_dict.items():
             for price in list_of_prices:
                 self.unitDeltaTestsSpan.addSpanUnit([label], close_price = price, open_price = price)
+                self.expected_delta_tests_units_as_list.append(price)
         self.max_unit_delta = 4.4
         self.max_unit_delta_label = self.unit_label_three
         self.min_unit_delta = -3.2
@@ -47,16 +49,26 @@ class TestSpan(unittest.TestCase):
         self.zeroTestsSpan =  Span(self.zero_tests_span_code)
         self.zero_delta_span_code = 'zero_delta'
         self.zero_delta_span_list = [0.0, 3.1, 4.4, 0.0]
+        self.expected_zero_tests_units_as_list = []
         for value in self.zero_delta_span_list:
             self.zeroTestsSpan.addSpanUnit([self.zero_delta_span_code], value, value)
+            self.expected_zero_tests_units_as_list.append(value)
         self.zero_delta_non_zero_close_span_code = 'zero_delta_non_zero_close'
         self.zero_delta_non_zero_close_span_list = [0.0, 3.1, 4.4, 2.0]
         for value in self.zero_delta_non_zero_close_span_list:
             self.zeroTestsSpan.addSpanUnit([self.zero_delta_non_zero_close_span_code], value, value)
+            self.expected_zero_tests_units_as_list.append(value)
         self.zero_average_test_span_code = 'zero_span_close_average'
         self.zero_average_test_span_list = [0.0, -1.0, -1.0, 2.0]
         for value in self.zero_average_test_span_list:
             self.zeroTestsSpan.addSpanUnit([self.zero_average_test_span_code], value, value)
+            self.expected_zero_tests_units_as_list.append(value)
+
+    def test_getUnitFieldValuesAsList(self):
+        test_units_as_list = self.unitDeltaTestsSpan.getUnitFieldValuesAsList('close_price')
+        self.assertEqual(test_units_as_list, self.expected_delta_tests_units_as_list)
+        test_zero_span_units_as_list = self.zeroTestsSpan.getUnitFieldValuesAsList('close_price')
+        self.assertEqual(test_zero_span_units_as_list, self.expected_zero_tests_units_as_list)
 
     def test_getUnitsCount(self):
         self.assertEqual(self.zeroTestsSpan.getUnitsCount(), 12)
