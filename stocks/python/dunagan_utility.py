@@ -1,6 +1,16 @@
 
 from collections import OrderedDict
 
+class DunaganListUtility:
+
+    @staticmethod
+    def sort_and_return_list(list_to_sort):
+        list_to_sort.sort()
+        return list_to_sort
+
+
+
+
 def sort_float_dictionary_ascending(dictionary_of_floats):
     """
     :param dict dictionary_of_floats:

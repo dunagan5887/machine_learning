@@ -3,9 +3,9 @@
 from pyspark import SparkContext
 from pyspark.mllib.clustering import KMeans
 
-from clusterHelper import ClusterHelper
+#from clusterHelper import ClusterHelper
 
-sc = SparkContext("local", "Stock Clustering", pyFiles=[])
+#sc = SparkContext("local", "Stock Clustering", pyFiles=[])
 
 a_list = [1.0, 2.0, 3.0]
 b_list = [1.4, 2.4, 3.4]
@@ -29,7 +29,7 @@ centers = my_kmmodel.clusterCenters
 
 print centers
 
-clusterGroups = ClusterHelper.getKMModelListOfClusterMembers(my_kmmodel, symbol_data_dict)
+clusterGroups = ClusterHelper.getKMModelListOfClusterMembersByDict(my_kmmodel, symbol_data_dict)
 
 print clusterGroups
 
