@@ -64,6 +64,23 @@ class TestSpan(unittest.TestCase):
             self.zeroTestsSpan.addSpanUnit([self.zero_average_test_span_code], value, value)
             self.expected_zero_tests_units_as_list.append(value)
 
+        self.rangeTestSpan = Span('range_test_span')
+        self.range_test_prices = [[5.6, 7.6], [3.6, 5.3], [10.1, 15.9], [1.3, 7.6], [0.0, None], [None, 100.0]]
+        self.expected_span_range = 14.6
+        for open_and_close_price in self.range_test_prices:
+            low_price, high_price = open_and_close_price
+            self.rangeTestSpan.addSpanUnit(low_price = low_price, high_price = high_price)
+
+    def test_getSpanPriceRange(self):
+        test_span_range = self.rangeTestSpan.getSpanPriceRange()
+        self.assertEqual(test_span_range, self.expected_span_range)
+
+        test_empty_span_range = self.emptySpan.getSpanPriceRange()
+        self.assertIsNone(test_empty_span_range)
+
+        test_span_with_no_low_high_range = self.testSpan.getSpanPriceRange()
+        self.assertIsNone(test_span_with_no_low_high_range)
+
     def test_getUnitFieldValuesAsList(self):
         test_units_as_list = self.unitDeltaTestsSpan.getUnitFieldValuesAsList('close_price')
         self.assertEqual(test_units_as_list, self.expected_delta_tests_units_as_list)

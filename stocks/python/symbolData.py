@@ -13,6 +13,9 @@ class SymbolData:
         self.spans = {}
 
     def getSpanByCode(self, span_code):
+        if span_code in self.spans:
+            return self.spans[span_code]
+        self.initializeSpanByCode(span_code)
         return self.spans[span_code]
 
     def getSpanUnitCount(self, span_code):
@@ -20,7 +23,7 @@ class SymbolData:
         return span.getUnitsCount()
 
     def setTodayPrice(self, today_price):
-        self.today_price = today_price
+        self.today_price = float(today_price)
         return self
 
     def getTodayPrice(self):
@@ -31,8 +34,12 @@ class SymbolData:
         return self
 
     def addSpanValueByCode(self, span_code, unit_labels, close_price = None, open_price = None, high_price = None, low_price = None, delta = None, delta_percentage = None):
-        self.spans[span_code].addSpanUnit(unit_labels, close_price, open_price, high_price, low_price, delta, delta_percentage)
+        spanToAddTo = self.getSpanByCode(span_code)
+        spanToAddTo.addSpanUnit(unit_labels, close_price, open_price, high_price, low_price, delta, delta_percentage)
         return self
+
+    def getTodayPriceOffSpanAverage(self, span_code, units_code = None):
+        return self.getPercentageDeltaOffSpanAverage(span_code, self.getTodayPrice(), units_code)
 
     def getPercentageDeltaOffSpanAverage(self, span_code, price_to_compare, units_code = None):
         span_average = self.getSpanAverageByCode(span_code, units_code)

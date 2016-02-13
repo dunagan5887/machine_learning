@@ -69,6 +69,23 @@ class TestDateIntervalDictionary(unittest.TestCase):
         self.start_date_four = '2016-01-31'
         self.end_date_four = '2016-02-15'
         self.dateIntervalDictionaryInstance.addDateIntervalByDates(self.start_date_four, self.end_date_four, self.interval_code_four)
+        self.expected_date_interval_codes = [self.interval_code_one, self.interval_code_two, self.interval_code_three, self.interval_code_four]
+        self.expected_date_interval_codes.sort()
+        self.expected_earliest_date = self.interval_start_three
+        self.expected_latest_date = self.end_date_four
+
+    def test_getEarliestDateInDictionary(self):
+        test_earliest_date = self.dateIntervalDictionaryInstance.getEarliestDateInDictionary()
+        self.assertEqual(test_earliest_date, self.expected_earliest_date)
+
+    def test_getLatestDateInDictionary(self):
+        test_latest_date = self.dateIntervalDictionaryInstance.getLatestDateInDictionary()
+        self.assertEqual(test_latest_date, self.expected_latest_date)
+
+    def test_getDateIntervalCodes(self):
+        test_date_intervals = self.dateIntervalDictionaryInstance.getDateIntervalCodes()
+        test_date_intervals.sort()
+        self.assertListEqual(self.expected_date_interval_codes, test_date_intervals)
 
     def test_init(self):
         test_code = self.dateIntervalDictionaryInstance.dictionary_code

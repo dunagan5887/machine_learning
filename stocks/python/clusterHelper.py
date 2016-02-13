@@ -1,9 +1,35 @@
+from rdd_utility import RddUtility
+
 class ClusterHelper:
+
+    @staticmethod
+    def getKMModelDictionaryOfClusterMembersByTuplesRDD(myKMModel, rddOfTuples):
+        """
+        :param pyspark.mllib.clustering.KMeansModel myKMModel:
+        :param RDD data_members:
+        :return: RDD
+        """
+        def predictionForTupleClosure(rdd_tuple):
+            """
+            :param RDD rdd_tuple:
+            :return: tuple (cluster_number, key)
+            """
+            key = rdd_tuple[0]
+            value = rdd_tuple[1]
+            cluster_number = myKMModel.predict(value)
+            return (cluster_number, key)
+
+        clusterNumberToKeyDict = rddOfTuples.map(predictionForTupleClosure)\
+                                            .map(lambda tuple : (tuple[0], [tuple[1]]))\
+                                            .reduceByKey(lambda a,b : a + b)\
+                                            .map(lambda tuple : {tuple[0] : tuple[1]})\
+                                            .reduce(RddUtility.combineDictionaries)
+
+        return clusterNumberToKeyDict
 
     @staticmethod
     def getKMModelListOfClusterMembersByDict(myKMModel, data_members_dict):
         """
-
         :param pyspark.mllib.clustering.KMeansModel myKMModel:
         :param dict data_members:
         :return:

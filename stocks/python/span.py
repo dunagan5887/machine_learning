@@ -130,6 +130,32 @@ class Span:
             return float("inf")
         return None
 
+    def getSpanPriceRange(self, units_label = None):
+        if not(units_label is None):
+            span_units_for_label = self.getSpanUnitsByLabel(units_label)
+            if span_units_for_label is None:
+                return None
+            units_for_range = span_units_for_label
+        else:
+            units_for_range = self.units
+
+        max_price = float("-inf")
+        min_price = float("+inf")
+        non_zero_value_was_found = False
+        for index, spanUnit in units_for_range.items():
+            unit_high_price = spanUnit.high_price
+            unit_low_price = spanUnit.low_price
+            if (unit_high_price is None) or (unit_low_price is None):
+                continue
+            max_price = unit_high_price if unit_high_price > max_price else max_price
+            min_price = unit_low_price if unit_low_price < min_price else min_price
+            non_zero_value_was_found = True
+
+        if non_zero_value_was_found:
+            range = max_price - min_price
+            return range
+        return None
+
     def getSpanCloseAverage(self, units_label = None):
         list_of_close_prices = []
         if not(units_label is None):
@@ -153,9 +179,9 @@ class Span:
 
 class SpanUnit:
     def __init__(self, close_price = None, open_price = None, high_price = None, low_price = None, delta = None, delta_percentage = None):
-        self.high_price = high_price
-        self.low_price = low_price
-        self.open_price = open_price
-        self.close_price = close_price
-        self.delta = delta
-        self.delta_percentage = delta_percentage
+        self.high_price = float(high_price) if not(high_price is None) else None
+        self.low_price = float(low_price) if not(low_price is None) else None
+        self.open_price = float(open_price) if not(open_price is None) else None
+        self.close_price = float(close_price) if not(close_price is None) else None
+        self.delta = float(delta) if not(delta is None) else None
+        self.delta_percentage = float(delta_percentage) if not(delta_percentage is None) else None

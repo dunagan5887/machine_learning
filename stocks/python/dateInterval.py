@@ -1,6 +1,7 @@
 from datetime import timedelta
 from datetime import datetime
 from collections import OrderedDict
+from dateDelta import DateDelta
 
 
 class DateInterval:
@@ -27,6 +28,17 @@ class DateIntervalDictionary:
         """
         self.dictionary_code = dictionary_code
         self.date_interval_dictionary = {}
+        self.earliest_date = None
+        self.latest_date = None
+
+    def getEarliestDateInDictionary(self):
+        return self.earliest_date
+
+    def getLatestDateInDictionary(self):
+        return self.latest_date
+
+    def getDateIntervalCodes(self):
+        return self.date_interval_dictionary.keys()
 
     def addDateIntervalByDates(self, start_date, end_date, interval_code = None):
         dateIntervalObject = DateInterval(start_date, end_date, interval_code)
@@ -43,6 +55,15 @@ class DateIntervalDictionary:
             if interval_code is None:
                 interval_code = len(self.date_interval_dictionary)
         self.date_interval_dictionary[interval_code] = dateIntervalInstance
+
+        start_date = dateIntervalInstance.start_date
+        end_date = dateIntervalInstance.end_date
+
+        if (self.earliest_date is None) or (start_date < self.earliest_date):
+            self.earliest_date = start_date
+        if (self.latest_date is None) or (end_date > self.latest_date):
+            self.latest_date = end_date
+
         return self
 
     def getDateIntervalByCode(self, interval_code):
@@ -136,3 +157,52 @@ class DateIntervalFactory:
             datetime_to_act_from_string = interval_date_string
 
         return date_interval_dates_dict
+
+
+class DateIntervalManager:
+
+    @staticmethod
+    def createDateIntervalDictionaryForPastYear():
+        date_to_track_from = '2015-12-19'
+        today_date = '2016-01-19'
+
+        days_between_dates = DateDelta.getDaysBetweenDateStrings(date_to_track_from, today_date)
+        interval_count = 12
+        dateIntervalDictionary = DateIntervalFactory.getDateIntervalDictionary(today_date, days_between_dates, interval_count, 'days', dictionary_code = 'leading_up_to_crash')
+
+        return dateIntervalDictionary
+
+    @staticmethod
+    def createDateIntervalDictionaries():
+        """
+        :return: dict
+        """
+        date_to_track_from = '2015-12-29'
+        today_date = '2016-01-19'
+
+        symbol_collection_span_code = 'crash_plus_12_periods_leading_up'
+        days_between_dates = DateDelta.getDaysBetweenDateStrings(date_to_track_from, today_date)
+        interval_count = 12
+        dateIntervalDictionary = DateIntervalFactory.getDateIntervalDictionary(date_to_track_from, days_between_dates, interval_count, 'days', dictionary_code = 'leading_up_to_crash')
+
+        since_crash_interval_code = 'since_crash'
+        betweenCrashDatesInterval = DateInterval(date_to_track_from, today_date, since_crash_interval_code)
+        sinceCrashDictionary = DateIntervalDictionary(since_crash_interval_code)
+        sinceCrashDictionary.addDateInterval(betweenCrashDatesInterval)
+
+        three_month_span_code = 'three_month'
+        threeMonthDateInterval = DateIntervalFactory.getDateIntervals(date_to_track_from, 12, 1, 'weeks').pop()
+        threeMonthDictionary = DateIntervalDictionary(three_month_span_code)
+        threeMonthDictionary.addDateInterval(threeMonthDateInterval)
+
+        one_year_span_code = 'one_year'
+        oneYearDateInterval = DateIntervalFactory.getDateIntervals(date_to_track_from, 52, 1, 'weeks').pop()
+        oneYearDictionary = DateIntervalDictionary(one_year_span_code)
+        oneYearDictionary.addDateInterval(oneYearDateInterval)
+
+        dateIntervalDictionaries = {symbol_collection_span_code : dateIntervalDictionary,
+                                    since_crash_interval_code : sinceCrashDictionary,
+                                    three_month_span_code : threeMonthDictionary,
+                                    one_year_span_code : oneYearDictionary}
+
+        return dateIntervalDictionaries
