@@ -27,7 +27,7 @@ class DateIntervalDictionary:
         :return:
         """
         self.dictionary_code = dictionary_code
-        self.date_interval_dictionary = {}
+        self.date_interval_dictionary = OrderedDict()
         self.earliest_date = None
         self.latest_date = None
 
@@ -38,6 +38,9 @@ class DateIntervalDictionary:
         return self.latest_date
 
     def getDateIntervalCodes(self):
+        """
+        :return: list
+        """
         return self.date_interval_dictionary.keys()
 
     def addDateIntervalByDates(self, start_date, end_date, interval_code = None):
@@ -163,11 +166,11 @@ class DateIntervalManager:
 
     @staticmethod
     def createDateIntervalDictionaryForPastYear():
-        date_to_track_from = '2015-12-19'
+        date_to_track_from = '2016-01-05'
         today_date = '2016-01-19'
 
         days_between_dates = DateDelta.getDaysBetweenDateStrings(date_to_track_from, today_date)
-        interval_count = 12
+        interval_count = 24
         dateIntervalDictionary = DateIntervalFactory.getDateIntervalDictionary(today_date, days_between_dates, interval_count, 'days', dictionary_code = 'leading_up_to_crash')
 
         return dateIntervalDictionary

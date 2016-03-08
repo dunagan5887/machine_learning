@@ -15,8 +15,11 @@ class ClusterHelper:
             :return: tuple (cluster_number, key)
             """
             key = rdd_tuple[0]
-            value = rdd_tuple[1]
-            cluster_number = myKMModel.predict(value)
+            list_of_tuples = rdd_tuple[1]
+
+            list_of_values_to_predict = map(lambda symbol_data_tuple : symbol_data_tuple[1], list_of_tuples)
+
+            cluster_number = myKMModel.predict(list_of_values_to_predict)
             return (cluster_number, key)
 
         clusterNumberToKeyDict = rddOfTuples.map(predictionForTupleClosure)\

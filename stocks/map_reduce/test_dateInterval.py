@@ -256,7 +256,7 @@ class TestDateIntervalFactory(unittest.TestCase):
             self.assertEqual(test_list_of_codes, [self.test_dates_interval_three_code_two, self.test_dates_interval_three_code_three], 'Failed for date {0}'.format(date_string))
         for date_string in self.test_interval_three_and_four_dates_list:
             test_list_of_codes = self.test_date_interval_dictionary.getIntervalCodesByDate(date_string)
-            self.assertEqual(test_list_of_codes, [self.test_dates_interval_three_code_four, self.test_dates_interval_three_code_three], 'Failed for date {0}'.format(date_string))
+            self.assertEqual(test_list_of_codes, [self.test_dates_interval_three_code_three, self.test_dates_interval_three_code_four], 'Failed for date {0}'.format(date_string))
 
 
 if __name__ == '__main__':

@@ -11,7 +11,7 @@ from symbolData import SymbolDataCollection
 stock_data_output_directory = '/var/machine_learning/stocks/data/stock_data/'
 
 date_to_track_from = '2015-12-29'
-today_date = '2016-01-19'
+today_date = '2016-02-16'
 
 symbol_collection_span_code = 'crash_plus_12_periods_leading_up'
 

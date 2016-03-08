@@ -8,6 +8,16 @@ class DunaganListUtility:
         list_to_sort.sort()
         return list_to_sort
 
+    @staticmethod
+    def convert_list_to_value_and_index_tuple_list(list_to_convert):
+        index = 0
+        converted_list = []
+        for data_value in list_to_convert:
+            tuple = (index, data_value)
+            converted_list.append(tuple)
+            index = index + 1
+        return converted_list
+
 
 
 

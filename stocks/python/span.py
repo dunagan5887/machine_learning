@@ -42,7 +42,6 @@ class Span:
 
     def getMaxUnitDelta(self, get_percentage = False):
         """
-
         :param bool get_percentage:
         :return: dict
         """
@@ -71,7 +70,6 @@ class Span:
 
     def getMinUnitDelta(self, get_percentage = False):
         """
-
         :param bool get_percentage:
         :return: dict
         """
@@ -128,6 +126,16 @@ class Span:
             if close_price == 0.0:
                 return 0.0
             return float("inf")
+        return None
+
+    def getSpanPriceRangeToAveragePriceRatio(self, units_label = None):
+        span_close_average = self.getSpanCloseAverage(units_label)
+        if not((span_close_average is None)):
+            span_price_range = self.getSpanPriceRange(units_label)
+            if not(span_price_range is None):
+                ratio = span_price_range / span_close_average
+                return ratio
+
         return None
 
     def getSpanPriceRange(self, units_label = None):

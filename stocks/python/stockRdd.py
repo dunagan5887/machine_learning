@@ -1,6 +1,7 @@
 
 from dunagan_utility import DunaganListUtility
 from symbolData import SymbolData
+from pyspark.sql import Row
 
 # NEED_UNIT_TESTS
 
@@ -16,18 +17,67 @@ class StockRdd:
     DELTA_PERCENTAGE_INDEX = 7
 
     @staticmethod
+    def getConvertDataListToSpanCodeLabeledDataRowSpanCodeRowsClosure(dateIntervalDictionary):
+        """
+        :param DateIntervalDictionary dateIntervalDictionary:
+        :return: function-closure
+        """
+        date_interval_codes = dateIntervalDictionary.getDateIntervalCodes()
+        number_of_date_interval_codes = len(date_interval_codes)
+        def getConvertDataListToSpanCodeLabeledDataRowSpanCodeRows(cluster_data_points_list):
+            """
+            :param list cluster_data_points_list:
+            :return: Row
+            """
+            kwargs = {}
+            index = 0
+            for data_point in cluster_data_points_list:
+                if index < number_of_date_interval_codes:
+                    span_code = date_interval_codes[index]
+                    kwargs[span_code] = float(data_point)
+                else:
+                    kwargs['today_off_span_average'] = float(data_point)
+                index = index + 1
+            rowToReturn = Row(**kwargs)
+            return rowToReturn
+        return getConvertDataListToSpanCodeLabeledDataRowSpanCodeRows
+
+    @staticmethod
+    def getOverallDeltaPercentageForClusterClosure(dateIntervalDictionary):
+        """
+        :param DateIntervalDictionary dateIntervalDictionary:
+        :return: lambda
+        """
+        date_interval_codes = dateIntervalDictionary.getDateIntervalCodes()
+        number_of_date_interval_codes = len(date_interval_codes)
+        def getOverallDeltaPercentageForCluster(cluster_data_points_list):
+            """
+            :param list cluster_data_points_list:
+            :return: float
+            """
+            total_delta_percentage = 1.0
+            index = 0
+            for data_point in cluster_data_points_list:
+                if index < number_of_date_interval_codes:
+                    total_delta_percentage = total_delta_percentage * (1.0 + data_point)
+                index = index + 1
+            return total_delta_percentage
+
+        return getOverallDeltaPercentageForCluster
+
+
+
+    @staticmethod
     def getDataToClusterByDateDictionariesClosure(dateIntervalDictionary):
         """
         :param DateIntervalDictionary dateIntervalDictionary:
         :return: function
         """
-
         date_interval_codes = dateIntervalDictionary.getDateIntervalCodes()
-
         def getDataToClusterByDateDictionaries(symbolInstance_key_tuple):
             """
             :param SymbolData symbolDataInstance:
-            :return: list
+            :return: list of tuples (span_code, span_delta_percentage)
             """
             symbol_code = symbolInstance_key_tuple[0]
             symbolDataInstance = symbolInstance_key_tuple[1]
@@ -37,15 +87,18 @@ class StockRdd:
             for span_code in date_interval_codes:
                 spanInstance = symbolDataInstance.getSpanByCode(span_code)
                 span_delta_percentage = spanInstance.getSpanDelta(get_percentage_delta = True)
-                span_range = spanInstance.getSpanPriceRange()
-                data_list.append(span_delta_percentage)
-                data_list.append(span_range)
+                #span_range = spanInstance.getSpanPriceRangeToAveragePriceRatio()
+                span_code_and_delta_percentage_tuple = (span_code, span_delta_percentage)
+
+                data_list.append(span_code_and_delta_percentage_tuple)
+                #data_list.append(span_range)
 
                 span_average = spanInstance.getSpanCloseAverage()
                 if not(span_average is None) and (span_today_price_off_average is None):
                     span_today_price_off_average = symbolDataInstance.getTodayPriceOffSpanAverage(span_code)
 
-            data_list.append(span_today_price_off_average)
+            span_today_price_off_average_tuple = ('span_today_price_off_average', span_today_price_off_average)
+            data_list.append(span_today_price_off_average_tuple)
 
             return (symbol_code, data_list)
 

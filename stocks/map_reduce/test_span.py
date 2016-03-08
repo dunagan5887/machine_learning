@@ -65,11 +65,23 @@ class TestSpan(unittest.TestCase):
             self.expected_zero_tests_units_as_list.append(value)
 
         self.rangeTestSpan = Span('range_test_span')
-        self.range_test_prices = [[5.6, 7.6], [3.6, 5.3], [10.1, 15.9], [1.3, 7.6], [0.0, None], [None, 100.0]]
+        self.range_test_prices = [[5.6, 7.6, 6.6], [3.6, 5.3, 4.4], [10.1, 15.9, 13.0], [1.3, 7.6, 5.1], [0.0, None, 3.3], [None, 100.0, 3.3]]
         self.expected_span_range = 14.6
+        self.range_test_span_average_close_price = 5.95
+        self.expected_span_range_to_close_price_ratio = round(self.expected_span_range / self.range_test_span_average_close_price, 7)
         for open_and_close_price in self.range_test_prices:
-            low_price, high_price = open_and_close_price
-            self.rangeTestSpan.addSpanUnit(low_price = low_price, high_price = high_price)
+            low_price, high_price, close_price = open_and_close_price
+            self.rangeTestSpan.addSpanUnit(low_price = low_price, high_price = high_price, close_price = close_price)
+
+    def test_getSpanPriceRangeToAveragePriceRatio(self):
+        test_span_price_range_to_average_close_price = round(self.rangeTestSpan.getSpanPriceRangeToAveragePriceRatio(), 7)
+        self.assertEqual(test_span_price_range_to_average_close_price, self.expected_span_range_to_close_price_ratio)
+
+        test_empty_span_ratio = self.emptySpan.getSpanPriceRangeToAveragePriceRatio()
+        self.assertIsNone(test_empty_span_ratio)
+
+        test_span_with_no_high_low_prices_ratio = self.testSpan.getSpanPriceRangeToAveragePriceRatio()
+        self.assertIsNone(test_span_with_no_high_low_prices_ratio)
 
     def test_getSpanPriceRange(self):
         test_span_range = self.rangeTestSpan.getSpanPriceRange()
