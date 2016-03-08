@@ -39,14 +39,10 @@ symbol_cluster_data_rdd = sample_data_rdd.map(mapStockCsvToKeyValueClosure)\
                                            .map(symbol_cluster_data_closure)
 
 
-symbol_cluster_data_rdd.take(3)
-
+symbol_cluster_data_rdd.cache()
 
 symbols_clustering_lists = symbol_cluster_data_rdd.map(lambda symbolListTuple : map(lambda symbol_data_tuple : symbol_data_tuple[1], symbolListTuple[1]))\
                                                   .filter(lambda list : all(not(value is None) for value in list))
-
-
-symbols_clustering_lists.take(1)
 
 stockKMeansClusterModel = KMeans.train(symbols_clustering_lists,k=3,
                                maxIterations=200,runs=10,
@@ -67,10 +63,10 @@ converted_center_delta_list.sort(lambda tuple_1, tuple_2: cmp(tuple_1[1], tuple_
 # (ClusterId, Delta-Percentage) Row list construction
 converted_center_delta_list_rows = map(lambda delta_tuple: Row(cluster_id=int(delta_tuple[0]), delta_percentage=float(delta_tuple[1])), converted_center_delta_list)
 
-sqlContext.sql("DROP TABLE cluster_center_delta_percentages")
+sqlContext.sql("DROP TABLE cluster_center_overall_delta_percentages")
 
 schemaCenterDeltas = sqlContext.createDataFrame(converted_center_delta_list_rows)
-schemaCenterDeltas.saveAsTable("cluster_center_delta_percentages")
+schemaCenterDeltas.saveAsTable("cluster_center_overall_delta_percentages")
 
 # (ClusterId,  Smybol) XRef Row List construction
 
@@ -87,17 +83,23 @@ sqlContext.sql("DROP TABLE xref_cluster_symbol")
 schemaClusterIdSymbolXref = sqlContext.createDataFrame(cluster_id_symbol_xref_rows_list)
 schemaClusterIdSymbolXref.saveAsTable('xref_cluster_symbol')
 
-
 # Cluster Center Row List construction
 
 #get_cluster_centers_with_span_codes_closure = getConvertClusterCentersToClusterIdSpanCodeRowsClosure(pastYearDateIntervalDictionary)
-get_cluster_centers_with_span_codes_closure = StockRdd.getConvertDataListToSpanCodeLabeledDataRowSpanCodeRowsClosure(pastYearDateIntervalDictionary)
-cluster_center_with_span_codes_list = map(get_cluster_centers_with_span_codes_closure, centers)
+get_cluster_centers_with_span_codes_kwargs_closure = StockRdd.getConvertDataListToSpanCodeLabeledDataRowKwargsClosure(pastYearDateIntervalDictionary)
+cluster_center_with_span_codes_kwargs_list = map(get_cluster_centers_with_span_codes_kwargs_closure, centers)
 
-sqlContext.sql("DROP TABLE cluster_center_data_points")
+cluster_id = 0
+for cluster_center_with_span_codes_kwargs in cluster_center_with_span_codes_kwargs_list:
+    cluster_center_with_span_codes_kwargs['cluster_id'] = cluster_id
+    cluster_id = cluster_id + 1
 
-dataFrameClusterCenterWithSpanCodes = sqlContext.createDataFrame(cluster_center_with_span_codes_list)
-dataFrameClusterCenterWithSpanCodes.saveAsTable('cluster_center_data_points')
+cluster_center_with_span_codes_rows_list = map(lambda kwargs: Row(**kwargs), cluster_center_with_span_codes_kwargs_list)
+
+sqlContext.sql("DROP TABLE cluster_center_delta_percentages")
+
+dataFrameClusterCenterWithSpanCodes = sqlContext.createDataFrame(cluster_center_with_span_codes_rows_list)
+dataFrameClusterCenterWithSpanCodes.saveAsTable('cluster_center_delta_percentages')
 
 
 # Stock Row List construction
@@ -114,8 +116,60 @@ for symbol_data_with_span_codes_tuple in symbol_cluster_data_rdd.collect():
     symbolRow = Row(**kwargs)
     symbol_data_rows_list.append(symbolRow)
 
+sqlContext.sql("DROP TABLE symbol_data_delta_percentages")
+
 dataFrameSymbolData = sqlContext.createDataFrame(symbol_data_rows_list)
-dataFrameSymbolData.saveAsTable('symbol_data')
+dataFrameSymbolData.saveAsTable('symbol_data_delta_percentages')
+
+# Cluster Center Line Graph Data points List construction
+
+get_center_line_graph_data_point_kwargs_closure = StockRdd.getConvertDataListToLineGraphDataPointKwargsClosure(pastYearDateIntervalDictionary)
+cluster_center_line_graph_data_point_kwargs_list = map(get_center_line_graph_data_point_kwargs_closure, centers)
+
+cluster_id = 0
+for cluster_center_line_graph_data_point_kwargs in cluster_center_line_graph_data_point_kwargs_list:
+    cluster_center_line_graph_data_point_kwargs['cluster_id'] = cluster_id
+    cluster_id = cluster_id + 1
+
+cluster_center_line_graph_data_point_rows_list = map(lambda kwargs: Row(**kwargs), cluster_center_line_graph_data_point_kwargs_list)
+
+sqlContext.sql("DROP TABLE cluster_center_line_graph_points")
+
+dataFrameClusterCenterLineGraphPoints = sqlContext.createDataFrame(cluster_center_line_graph_data_point_rows_list)
+dataFrameClusterCenterLineGraphPoints.saveAsTable('cluster_center_line_graph_points')
+
+
+# Symbol Line Graph Data points List construction
+
+symbol_line_graph_points_list = []
+
+date_interval_codes = pastYearDateIntervalDictionary.getDateIntervalCodes()
+number_of_date_interval_codes = len(date_interval_codes)
+
+for symbol_data_with_span_codes_tuple in symbol_cluster_data_rdd.collect():
+    symbol = symbol_data_with_span_codes_tuple[0]
+    span_code_and_data_point_tuples_list = symbol_data_with_span_codes_tuple[1]
+    kwargs = {'symbol': symbol}
+    total_delta_percentage = 1.0
+    index = 0
+    for span_code_and_data_point_tuple in span_code_and_data_point_tuples_list:
+        if index < number_of_date_interval_codes:
+            span_code = span_code_and_data_point_tuple[0]
+            data_point = span_code_and_data_point_tuple[1]
+            delta_percentage = float(data_point)
+            total_delta_percentage = total_delta_percentage * (1.0 + delta_percentage)
+            kwargs[span_code] = total_delta_percentage
+        index = index + 1
+    symbolRow = Row(**kwargs)
+    symbol_line_graph_points_list.append(symbolRow)
+
+sqlContext.sql("DROP TABLE symbol_data_line_graph_points")
+
+dataFrameSymbolDataLineGraphPoints = sqlContext.createDataFrame(symbol_line_graph_points_list)
+dataFrameSymbolDataLineGraphPoints.saveAsTable('symbol_data_line_graph_points')
+
+
+
 
 
 

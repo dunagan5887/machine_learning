@@ -16,31 +16,58 @@ class StockRdd:
     DELTA_INDEX = 6
     DELTA_PERCENTAGE_INDEX = 7
 
+
     @staticmethod
-    def getConvertDataListToSpanCodeLabeledDataRowSpanCodeRowsClosure(dateIntervalDictionary):
+    def getConvertDataListToLineGraphDataPointKwargsClosure(dateIntervalDictionary):
         """
         :param DateIntervalDictionary dateIntervalDictionary:
         :return: function-closure
         """
         date_interval_codes = dateIntervalDictionary.getDateIntervalCodes()
         number_of_date_interval_codes = len(date_interval_codes)
-        def getConvertDataListToSpanCodeLabeledDataRowSpanCodeRows(cluster_data_points_list):
+        def getConvertDataListToLineGraphDataPointKwargs(cluster_data_points_list):
             """
             :param list cluster_data_points_list:
             :return: Row
             """
-            kwargs = {}
+            kwargs_dict = {}
+            index = 0
+            total_delta_percentage = 1.0
+            for data_point in cluster_data_points_list:
+                if index < number_of_date_interval_codes:
+                    span_code = date_interval_codes[index]
+                    delta_percentage = float(data_point)
+                    total_delta_percentage = total_delta_percentage * (1.0 + delta_percentage)
+                    kwargs_dict[span_code] = float(total_delta_percentage)
+                index = index + 1
+            return kwargs_dict
+        return getConvertDataListToLineGraphDataPointKwargs
+
+
+    @staticmethod
+    def getConvertDataListToSpanCodeLabeledDataRowKwargsClosure(dateIntervalDictionary):
+        """
+        :param DateIntervalDictionary dateIntervalDictionary:
+        :return: function-closure
+        """
+        date_interval_codes = dateIntervalDictionary.getDateIntervalCodes()
+        number_of_date_interval_codes = len(date_interval_codes)
+        def getConvertDataListToSpanCodeLabeledDataRowKwargs(cluster_data_points_list):
+            """
+            :param list cluster_data_points_list:
+            :return: Row
+            """
+            kwargs_dict = {}
             index = 0
             for data_point in cluster_data_points_list:
                 if index < number_of_date_interval_codes:
                     span_code = date_interval_codes[index]
-                    kwargs[span_code] = float(data_point)
+                    kwargs_dict[span_code] = float(data_point)
                 else:
-                    kwargs['today_off_span_average'] = float(data_point)
+                    kwargs_dict['today_off_span_average'] = float(data_point)
                 index = index + 1
-            rowToReturn = Row(**kwargs)
-            return rowToReturn
-        return getConvertDataListToSpanCodeLabeledDataRowSpanCodeRows
+            return kwargs_dict
+        return getConvertDataListToSpanCodeLabeledDataRowKwargs
 
     @staticmethod
     def getOverallDeltaPercentageForClusterClosure(dateIntervalDictionary):
