@@ -114,7 +114,7 @@ class StockRdd:
         def getDataToClusterByDateDictionaries(symbolInstance_key_tuple):
             """
             :param SymbolData symbolDataInstance:
-            :return: list of tuples (span_code, span_delta_percentage)
+            :return: tuple (symbol_code, list of tuples (span_code|'span_today_price_off_average', span_delta_percentage|span_today_price_off_average) )
             """
             symbol_code = symbolInstance_key_tuple[0]
             symbolDataInstance = symbolInstance_key_tuple[1]
@@ -131,6 +131,7 @@ class StockRdd:
                 #data_list.append(span_range)
 
                 span_average = spanInstance.getSpanCloseAverage()
+                # We want this to be the most recent span. Spans should be ordered with most recent being first
                 if not(span_average is None) and (span_today_price_off_average is None):
                     span_today_price_off_average = symbolDataInstance.getTodayPriceOffSpanAverage(span_code)
 

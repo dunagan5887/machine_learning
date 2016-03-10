@@ -42,6 +42,10 @@ class SymbolData:
         return self.getPercentageDeltaOffSpanAverage(span_code, self.getTodayPrice(), units_code)
 
     def getPercentageDeltaOffSpanAverage(self, span_code, price_to_compare, units_code = None):
+
+        if (price_to_compare is None):
+            return None
+
         span_average = self.getSpanAverageByCode(span_code, units_code)
         if span_average is None:
             return None

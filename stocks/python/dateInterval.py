@@ -166,11 +166,11 @@ class DateIntervalManager:
 
     @staticmethod
     def createDateIntervalDictionaryForPastYear():
-        date_to_track_from = '2016-01-05'
-        today_date = '2016-01-19'
+        interval_start_date = '2016-02-25'
+        today_date = '2016-03-08'
 
-        days_between_dates = DateDelta.getDaysBetweenDateStrings(date_to_track_from, today_date)
-        interval_count = 24
+        days_between_dates = DateDelta.getDaysBetweenDateStrings(interval_start_date, today_date)
+        interval_count = 26
         dateIntervalDictionary = DateIntervalFactory.getDateIntervalDictionary(today_date, days_between_dates, interval_count, 'days', dictionary_code = 'leading_up_to_crash')
 
         return dateIntervalDictionary

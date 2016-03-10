@@ -21,14 +21,16 @@ from clusterHelper import ClusterHelper
 from rdd_utility import RddUtility
 from dunagan_utility import DunaganListUtility
 
-sample_data_rdd = sc.textFile("/var/machine_learning/stocks/data/sample_data/*.csv").distinct()
-#sample_data_rdd = sc.textFile("/var/machine_learning/stocks/data/historical_data/*.csv").distinct()
+#sample_data_rdd = sc.textFile("/var/machine_learning/stocks/data/sample_data/*.csv").distinct()
+#sample_data_rdd = sc.textFile("/var/machine_learning/stocks/data/historical_data/Z*.csv").distinct()
+sample_data_rdd = sc.textFile("/var/machine_learning/stocks/data/historical_data/*.csv").distinct()
+
 
 pastYearDateIntervalDictionary = DateIntervalManager.createDateIntervalDictionaryForPastYear()
 
 past_year_date_code = 'past_year'
-today_date = '2016-01-19'
-#today_date = '2016-03-08'
+#today_date = '2016-01-19'
+today_date = '2016-03-08'
 mapStockCsvToKeyValueClosure = StockRdd.getMapStockCsvToKeyValueForDatesInDictionaryClosure(pastYearDateIntervalDictionary)
 
 symbol_creation_function_closure = StockRdd.getSymbolDataInstanceForDateDictionaryDataPointsClosure(pastYearDateIntervalDictionary, today_date)
@@ -43,7 +45,6 @@ symbol_cluster_data_rdd = sample_data_rdd.map(mapStockCsvToKeyValueClosure)\
                                            .map(symbol_creation_function_closure)\
                                            .map(symbol_cluster_data_closure)\
                                            .filter(symbol_has_none_values_closure)
-
 
 symbol_cluster_data_rdd.cache()
 
