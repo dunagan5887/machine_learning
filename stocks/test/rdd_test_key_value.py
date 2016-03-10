@@ -3,13 +3,15 @@
 from pyspark import SparkContext
 from pyspark.sql import HiveContext
 
-sc = SparkContext("spark://ubuntu:7077", "Stock Clustering", pyFiles=[])
+
+
+sc = SparkContext("spark://10.0.0.8:7077", "Stock Clustering", pyFiles=[])
 sqlContext = HiveContext(sc)
 
 #sample_data_rdd = sc.textFile("/var/machine_learning/stocks/data/sample_data/*.csv").distinct()
 
-sample_data_rdd = sc.textFile("/var/machine_learning/stocks/data/historical_data/*.csv").distinct()
 
+database_table_prefix = "sample"
 
 from pyspark.sql import Row
 from stockRdd import StockRdd
@@ -20,15 +22,18 @@ from rdd_utility import RddUtility
 from dunagan_utility import DunaganListUtility
 
 sample_data_rdd = sc.textFile("/var/machine_learning/stocks/data/sample_data/*.csv").distinct()
+#sample_data_rdd = sc.textFile("/var/machine_learning/stocks/data/historical_data/*.csv").distinct()
 
 pastYearDateIntervalDictionary = DateIntervalManager.createDateIntervalDictionaryForPastYear()
 
 past_year_date_code = 'past_year'
 today_date = '2016-01-19'
+#today_date = '2016-03-08'
 mapStockCsvToKeyValueClosure = StockRdd.getMapStockCsvToKeyValueForDatesInDictionaryClosure(pastYearDateIntervalDictionary)
 
 symbol_creation_function_closure = StockRdd.getSymbolDataInstanceForDateDictionaryDataPointsClosure(pastYearDateIntervalDictionary, today_date)
 symbol_cluster_data_closure = StockRdd.getDataToClusterByDateDictionariesClosure(pastYearDateIntervalDictionary)
+symbol_has_none_values_closure = StockRdd.getDoesSymbolTupleHaveNoNoneValueClosure()
 
 symbol_cluster_data_rdd = sample_data_rdd.map(mapStockCsvToKeyValueClosure)\
                                            .filter(lambda line: not(line is None))\
@@ -36,7 +41,8 @@ symbol_cluster_data_rdd = sample_data_rdd.map(mapStockCsvToKeyValueClosure)\
                                            .map(lambda tuple : ( tuple[0], StockRdd.sort_and_compute_deltas( list(tuple[1]) ) ) )\
                                            .filter(lambda tuple : len(list(tuple[1])) > 180)\
                                            .map(symbol_creation_function_closure)\
-                                           .map(symbol_cluster_data_closure)
+                                           .map(symbol_cluster_data_closure)\
+                                           .filter(symbol_has_none_values_closure)
 
 
 symbol_cluster_data_rdd.cache()
@@ -44,8 +50,12 @@ symbol_cluster_data_rdd.cache()
 symbols_clustering_lists = symbol_cluster_data_rdd.map(lambda symbolListTuple : map(lambda symbol_data_tuple : symbol_data_tuple[1], symbolListTuple[1]))\
                                                   .filter(lambda list : all(not(value is None) for value in list))
 
-stockKMeansClusterModel = KMeans.train(symbols_clustering_lists,k=3,
-                               maxIterations=200,runs=10,
+
+# NEED TO FIGURE out the big O() notatation for the KMeans.train() method below in terms of k/maxIterations/runs
+
+
+stockKMeansClusterModel = KMeans.train(symbols_clustering_lists,k=1000,
+                               maxIterations=100,runs=5,
                                initializationMode='k-means||',seed=10L)
 
 centers = stockKMeansClusterModel.clusterCenters
@@ -156,7 +166,7 @@ for symbol_data_with_span_codes_tuple in symbol_cluster_data_rdd.collect():
         if index < number_of_date_interval_codes:
             span_code = span_code_and_data_point_tuple[0]
             data_point = span_code_and_data_point_tuple[1]
-            delta_percentage = float(data_point)
+            delta_percentage = float(data_point) # NEED TO FIGURE OUT WHY SOME SYMBOLS HAVE NONE FOR data_point here
             total_delta_percentage = total_delta_percentage * (1.0 + delta_percentage)
             kwargs[span_code] = total_delta_percentage
         index = index + 1
@@ -175,7 +185,7 @@ dataFrameSymbolDataLineGraphPoints.saveAsTable('symbol_data_line_graph_points')
 
 
 
-
+'''
 test_select = sqlContext.sql("SELECT cluster_id, delta_percentage FROM cluster_center_delta_percentages")
 
 test_values = test_select.map(lambda row: "Percentage: " + str(row.delta_percentage))
@@ -214,7 +224,7 @@ clusterGroupsDictionary_file.close()
 clusterGroupsDictionary_file = open('/tmp/stocks_converted_center_delta_list.txt', 'w')
 clusterGroupsDictionary_file.write(str(converted_center_delta_list))
 clusterGroupsDictionary_file.close()
-
+'''
 
 
 

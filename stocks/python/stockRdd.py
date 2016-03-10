@@ -16,6 +16,16 @@ class StockRdd:
     DELTA_INDEX = 6
     DELTA_PERCENTAGE_INDEX = 7
 
+    @staticmethod
+    def getDoesSymbolTupleHaveNoNoneValueClosure():
+        def doesSymbolTupleHaveNoNoneValue(symbol_tuple):
+            span_code_and_data_point_tuples_list = symbol_tuple[1]
+            for span_code_and_data_point_tuple in span_code_and_data_point_tuples_list:
+                data_point = span_code_and_data_point_tuple[1]
+                if (data_point is None):
+                    return False
+            return True
+        return doesSymbolTupleHaveNoNoneValue
 
     @staticmethod
     def getConvertDataListToLineGraphDataPointKwargsClosure(dateIntervalDictionary):

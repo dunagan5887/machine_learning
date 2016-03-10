@@ -19,8 +19,11 @@ function get_file_data_as_array($file_path)
 
 function download_stock_data_history_by_symbol($stock_symbol)
 {
-    $historical_stock_data_link_format = 'http://real-chart.finance.yahoo.com/table.csv?s=%s&a=03&b=12&c=1900&d=00&e=19&f=2016&g=d&ignore=.csv';
-    $link = sprintf($historical_stock_data_link_format, $stock_symbol);
+    $year = date('Y');
+    $day = intval(date('d'));
+    $month = intval(date('m')) - 1;
+    $historical_stock_data_link_format = 'http://real-chart.finance.yahoo.com/table.csv?s=%s&a=03&b=12&c=1900&d=%s&e=%s&f=%s&g=d&ignore=.csv';
+    $link = sprintf($historical_stock_data_link_format, $stock_symbol, $day, $month, $year);
     $historical_stock_data = file_get_contents($link);
 
     // Header row of file
