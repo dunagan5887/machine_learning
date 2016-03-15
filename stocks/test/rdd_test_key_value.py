@@ -5,13 +5,12 @@ from pyspark.sql import HiveContext
 
 
 
-sc = SparkContext("spark://10.0.0.8:7077", "Stock Clustering", pyFiles=[])
+sc = SparkContext("spark://10.0.0.8:7077", "Stock Clustering", pyFiles=['/var/machine_learning/stocks/python/stocks_python.zip'])
 sqlContext = HiveContext(sc)
 
+mysql_url = "jdbc:mysql://10.0.0.8:3306/stocks?user=parallels&password=dellc123"
+
 #sample_data_rdd = sc.textFile("/var/machine_learning/stocks/data/sample_data/*.csv").distinct()
-
-
-database_table_prefix = "sample"
 
 from pyspark.sql import Row
 from stockRdd import StockRdd
@@ -22,15 +21,24 @@ from rdd_utility import RddUtility
 from dunagan_utility import DunaganListUtility
 
 #sample_data_rdd = sc.textFile("/var/machine_learning/stocks/data/sample_data/*.csv").distinct()
-#sample_data_rdd = sc.textFile("/var/machine_learning/stocks/data/historical_data/Z*.csv").distinct()
-sample_data_rdd = sc.textFile("/var/machine_learning/stocks/data/historical_data/*.csv").distinct()
+sample_data_rdd = sc.textFile("/var/machine_learning/stocks/data/historical_data/Z*.csv").distinct()
+#sample_data_rdd = sc.textFile("/var/machine_learning/stocks/data/historical_data/*.csv").distinct()
 
+#sample_data_rdd = sc.textFile("/var/machine_learning/stocks/data/historical_data/UIHC.csv").distinct()
 
-pastYearDateIntervalDictionary = DateIntervalManager.createDateIntervalDictionaryForPastYear()
+today_date = '2016-03-08'
+pastYearDateIntervalDictionary = DateIntervalManager.createDateIntervalDictionaryForPastYear(today_date)
 
 past_year_date_code = 'past_year'
 #today_date = '2016-01-19'
-today_date = '2016-03-08'
+
+database_table_prefix = today_date.replace('-', '_') + '_' + past_year_date_code
+
+def getDatabaseTableName(table_suffix):
+    return database_table_prefix + '_' + table_suffix
+
+
+
 mapStockCsvToKeyValueClosure = StockRdd.getMapStockCsvToKeyValueForDatesInDictionaryClosure(pastYearDateIntervalDictionary)
 
 symbol_creation_function_closure = StockRdd.getSymbolDataInstanceForDateDictionaryDataPointsClosure(pastYearDateIntervalDictionary, today_date)
@@ -56,12 +64,12 @@ symbols_clustering_lists = symbol_cluster_data_rdd.map(lambda symbolListTuple : 
 
 
 stockKMeansClusterModel = KMeans.train(symbols_clustering_lists,k=1000,
-                               maxIterations=100,runs=5,
+                               maxIterations=100,runs=10,
                                initializationMode='k-means||',seed=10L)
 
 centers = stockKMeansClusterModel.clusterCenters
 
-clusterGroupsDictionary = ClusterHelper.getKMModelDictionaryOfClusterMembersByTuplesRDD(stockKMeansClusterModel, symbol_cluster_data_rdd)
+clusterGroupsDictionaryRdd = ClusterHelper.getKMModelDictionaryOfClusterMembersByTuplesRDD(stockKMeansClusterModel, symbol_cluster_data_rdd)
 
 get_overall_delta_percentage_closure = StockRdd.getOverallDeltaPercentageForClusterClosure(pastYearDateIntervalDictionary)
 cluster_center_overall_deltas = map(get_overall_delta_percentage_closure, centers)
@@ -74,25 +82,40 @@ converted_center_delta_list.sort(lambda tuple_1, tuple_2: cmp(tuple_1[1], tuple_
 # (ClusterId, Delta-Percentage) Row list construction
 converted_center_delta_list_rows = map(lambda delta_tuple: Row(cluster_id=int(delta_tuple[0]), delta_percentage=float(delta_tuple[1])), converted_center_delta_list)
 
-sqlContext.sql("DROP TABLE cluster_center_overall_delta_percentages")
+#sqlContext.sql("DROP TABLE cluster_center_overall_delta_percentages")
 
 schemaCenterDeltas = sqlContext.createDataFrame(converted_center_delta_list_rows)
-schemaCenterDeltas.saveAsTable("cluster_center_overall_delta_percentages")
+#schemaCenterDeltas.saveAsTable("cluster_center_overall_delta_percentages")
+
+cluster_center_overall_delta_percentages_table = getDatabaseTableName('cluster_center_overall_delta_percentages')
+schemaCenterDeltas.write.jdbc(url=mysql_url, table=cluster_center_overall_delta_percentages_table, mode="overwrite")
 
 # (ClusterId,  Smybol) XRef Row List construction
 
 cluster_id_symbol_xref_rows_list = []
 
-for cluster_id, list_of_symbols in clusterGroupsDictionary.items():
+for cluster_id, list_of_symbols in clusterGroupsDictionaryRdd.items():
     for symbol in list_of_symbols:
         print "cluster_id: " + str(cluster_id) + "\t\tsymbol: " + symbol
         xrefRow = Row(cluster_id=int(cluster_id), symbol=str(symbol))
         cluster_id_symbol_xref_rows_list.append(xrefRow)
 
-sqlContext.sql("DROP TABLE xref_cluster_symbol")
+print cluster_id_symbol_xref_rows_list
 
-schemaClusterIdSymbolXref = sqlContext.createDataFrame(cluster_id_symbol_xref_rows_list)
-schemaClusterIdSymbolXref.saveAsTable('xref_cluster_symbol')
+cluster_id_symbol_xref_rows_rdd = sc.parallelize(cluster_id_symbol_xref_rows_list)
+
+#clusterGroupsDictionary_file = open('/tmp/xref_cluster_symbol.txt', 'w')
+#clusterGroupsDictionary_file.write(str(cluster_id_symbol_xref_rows_rdd.collect()))
+#clusterGroupsDictionary_file.close()
+
+#sqlContext.sql("DROP TABLE xref_cluster_symbol")
+
+schemaClusterIdSymbolXref = sqlContext.createDataFrame(cluster_id_symbol_xref_rows_rdd)
+#schemaClusterIdSymbolXref.saveAsTable('xref_cluster_symbol')
+
+xref_cluster_symbol_table_name = getDatabaseTableName('xref_cluster_symbol')
+schemaClusterIdSymbolXref.write.jdbc(url=mysql_url, table=xref_cluster_symbol_table_name, mode="overwrite")
+
 
 # Cluster Center Row List construction
 
@@ -107,11 +130,14 @@ for cluster_center_with_span_codes_kwargs in cluster_center_with_span_codes_kwar
 
 cluster_center_with_span_codes_rows_list = map(lambda kwargs: Row(**kwargs), cluster_center_with_span_codes_kwargs_list)
 
-sqlContext.sql("DROP TABLE cluster_center_delta_percentages")
+
+#sqlContext.sql("DROP TABLE cluster_center_delta_percentages")
 
 dataFrameClusterCenterWithSpanCodes = sqlContext.createDataFrame(cluster_center_with_span_codes_rows_list)
-dataFrameClusterCenterWithSpanCodes.saveAsTable('cluster_center_delta_percentages')
+#dataFrameClusterCenterWithSpanCodes.saveAsTable('cluster_center_delta_percentages')
 
+cluster_center_delta_percentages_table_name = getDatabaseTableName('cluster_center_delta_percentages')
+dataFrameClusterCenterWithSpanCodes.write.jdbc(url=mysql_url, table=cluster_center_delta_percentages_table_name, mode="overwrite")
 
 # Stock Row List construction
 symbol_data_rows_list = []
@@ -127,10 +153,13 @@ for symbol_data_with_span_codes_tuple in symbol_cluster_data_rdd.collect():
     symbolRow = Row(**kwargs)
     symbol_data_rows_list.append(symbolRow)
 
-sqlContext.sql("DROP TABLE symbol_data_delta_percentages")
+#sqlContext.sql("DROP TABLE symbol_data_delta_percentages")
 
 dataFrameSymbolData = sqlContext.createDataFrame(symbol_data_rows_list)
-dataFrameSymbolData.saveAsTable('symbol_data_delta_percentages')
+#dataFrameSymbolData.saveAsTable('symbol_data_delta_percentages')
+
+symbol_data_delta_percentages_table_name = getDatabaseTableName('symbol_data_delta_percentages')
+dataFrameSymbolData.write.jdbc(url=mysql_url, table=symbol_data_delta_percentages_table_name, mode="overwrite")
 
 # Cluster Center Line Graph Data points List construction
 
@@ -144,11 +173,13 @@ for cluster_center_line_graph_data_point_kwargs in cluster_center_line_graph_dat
 
 cluster_center_line_graph_data_point_rows_list = map(lambda kwargs: Row(**kwargs), cluster_center_line_graph_data_point_kwargs_list)
 
-sqlContext.sql("DROP TABLE cluster_center_line_graph_points")
+#sqlContext.sql("DROP TABLE cluster_center_line_graph_points")
 
 dataFrameClusterCenterLineGraphPoints = sqlContext.createDataFrame(cluster_center_line_graph_data_point_rows_list)
-dataFrameClusterCenterLineGraphPoints.saveAsTable('cluster_center_line_graph_points')
+#dataFrameClusterCenterLineGraphPoints.saveAsTable('cluster_center_line_graph_points')
 
+cluster_center_line_graph_points_table_name = getDatabaseTableName('cluster_center_line_graph_points')
+dataFrameClusterCenterLineGraphPoints.write.jdbc(url=mysql_url, table=cluster_center_line_graph_points_table_name, mode="overwrite")
 
 # Symbol Line Graph Data points List construction
 
@@ -174,12 +205,13 @@ for symbol_data_with_span_codes_tuple in symbol_cluster_data_rdd.collect():
     symbolRow = Row(**kwargs)
     symbol_line_graph_points_list.append(symbolRow)
 
-sqlContext.sql("DROP TABLE symbol_data_line_graph_points")
+#sqlContext.sql("DROP TABLE symbol_data_line_graph_points")
 
 dataFrameSymbolDataLineGraphPoints = sqlContext.createDataFrame(symbol_line_graph_points_list)
-dataFrameSymbolDataLineGraphPoints.saveAsTable('symbol_data_line_graph_points')
+#dataFrameSymbolDataLineGraphPoints.saveAsTable('symbol_data_line_graph_points')
 
-
+symbol_data_line_graph_points_table_name = getDatabaseTableName('symbol_data_line_graph_points')
+dataFrameSymbolDataLineGraphPoints.write.jdbc(url=mysql_url, table=symbol_data_line_graph_points_table_name, mode="overwrite")
 
 
 

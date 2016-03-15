@@ -150,7 +150,7 @@ class DateIntervalFactory:
             time_delta = timedelta(**method_arguments_dict)
             interval_datetime = datetime_to_act_from - time_delta if direction_is_past else datetime_to_act_from + time_delta
             interval_date_string = interval_datetime.strftime('%Y-%m-%d')
-            code_label = str(i * frequency) + '-' + str((i+1) * frequency)
+            code_label = str(i * frequency) + '_' + str((i+1) * frequency)
             code = code_label + '_' + str(unit)
             if direction_is_past:
                 date_interval_dates_dict[code] = [interval_date_string, datetime_to_act_from_string]
@@ -165,11 +165,10 @@ class DateIntervalFactory:
 class DateIntervalManager:
 
     @staticmethod
-    def createDateIntervalDictionaryForPastYear():
-        interval_start_date = '2016-02-25'
-        today_date = '2016-03-08'
+    def createDateIntervalDictionaryForPastYear(today_date):
 
-        days_between_dates = DateDelta.getDaysBetweenDateStrings(interval_start_date, today_date)
+        #days_between_dates = DateDelta.getDaysBetweenDateStrings(interval_start_date, today_date)
+        days_between_dates = 14
         interval_count = 26
         dateIntervalDictionary = DateIntervalFactory.getDateIntervalDictionary(today_date, days_between_dates, interval_count, 'days', dictionary_code = 'leading_up_to_crash')
 

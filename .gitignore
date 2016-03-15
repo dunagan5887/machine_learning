@@ -7,3 +7,4 @@ stocks/map_reduce/test_output/
 stocks/backup
 stocks/derby.log
 stocks/metastore_db/
+stocks/python/stocks_python.zip
