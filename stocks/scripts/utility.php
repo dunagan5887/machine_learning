@@ -6,7 +6,7 @@
 
 function get_data_directory()
 {
-    return __DIR__ . '/../data';
+    return '/var/data/stocks/';
 }
 
 function get_data_subdirectory($sub_directory)
