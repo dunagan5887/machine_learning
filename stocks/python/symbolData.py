@@ -10,6 +10,7 @@ class SymbolData:
     def __init__(self, symbol):
         self.symbol = symbol
         self.today_price = None
+        self.today_delta_percentage = None
         self.spans = {}
 
     def getSpanByCode(self, span_code):
@@ -28,6 +29,12 @@ class SymbolData:
 
     def getTodayPrice(self):
         return self.today_price
+
+    def setTodayDeltaPercentage(self, today_delta_percentage):
+        self.today_delta_percentage = today_delta_percentage
+
+    def getTodayDeltaPercentage(self):
+        return self.today_delta_percentage
 
     def initializeSpanByCode(self, span_code):
         self.spans[span_code] = Span(span_code)
@@ -131,6 +138,28 @@ class SymbolData:
                 return float(span_delta_value) / span_min_delta_value
             return float("inf")
         return None
+
+    def getMinSpanUnitDelta(self, get_percentage_delta = False):
+        """
+        :param bool get_percentage_delta:
+        :return: float
+        """
+        min_unit_delta = float("inf")
+        for span_code, symbolSpan in self.spans.items(): # type: Span
+            
+            for unit_label, spanUnit in symbolSpan.units.items():
+                if get_percentage_delta:
+                    span_unit_delta = spanUnit.delta_percentage
+                else:
+                    span_unit_delta = spanUnit.delta
+
+                if (not(span_unit_delta is None) and (span_unit_delta < min_unit_delta)):
+                    min_unit_delta = span_unit_delta
+
+        return min_unit_delta
+
+    def removeSpanUnitDeltaByDate(self):
+
 
 class SymbolDataCollection:
     

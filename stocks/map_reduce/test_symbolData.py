@@ -84,6 +84,26 @@ class TestSymbolData(unittest.TestCase):
             self.unitDeltaTestsSymbol.addSpanValueByCode(self.zero_average_span_code, self.zero_average_span_code, close_price = value, open_price = value)
         self.expected_percentage_delta_off_zero_delta_span_average = 0.7410714285714288
 
+        self.span_unit_deltas = [-1.3, -1.5, .3, 4.4, 5.0, 1.1]
+        self.expected_span_unit_min_delta = -1.5
+        self.span_unit_delta_percentages = [-.13, -.15, .3, .4, -.04, 2.3]
+        self.expected_unit_delta_percentage = -.15
+        self.span_code_prefix = 'span_unit_'
+        self.spanUnitDeltasSymbol = SymbolData('span_unit_deltas')
+        for i in range(0, len(self.span_unit_deltas)):
+            unit_delta = self.span_unit_deltas[i]
+            unit_delta_percentage = self.span_unit_delta_percentages[i]
+            span_code = self.span_code_prefix + str(i)
+            self.spanUnitDeltasSymbol.addSpanValueByCode(span_code, [span_code], delta = unit_delta, delta_percentage = unit_delta_percentage)
+            oscillating_span_code = self.span_code_prefix + str(i % 2)
+            self.spanUnitDeltasSymbol.addSpanValueByCode(oscillating_span_code, [oscillating_span_code], delta = unit_delta, delta_percentage = unit_delta_percentage)
+
+    def test_getMinSpanUnitDelta(self):
+        test_min_unit_delta = self.spanUnitDeltasSymbol.getMinSpanUnitDelta()
+        self.assertEqual(self.expected_span_unit_min_delta, test_min_unit_delta)
+        test_min_unit_delta_percentage = self.spanUnitDeltasSymbol.getMinSpanUnitDelta(get_percentage_delta = True)
+        self.assertEqual(test_min_unit_delta_percentage, self.expected_unit_delta_percentage)
+
     def test_getSpanByCode(self):
         zero_delta_span = self.unitDeltaTestsSymbol.getSpanByCode(self.zero_delta_span_code)
         self.assertEqual(self.zero_delta_span_code, zero_delta_span.code)

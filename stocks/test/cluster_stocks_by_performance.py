@@ -1,16 +1,12 @@
 
-
 from pyspark import SparkContext
 from pyspark.sql import HiveContext
 
 
-
-sc = SparkContext("spark://10.0.0.8:7077", "Stock Clustering", pyFiles=['/var/machine_learning/stocks/python/stocks_python.zip'])
+sc = SparkContext("spark://10.211.55.4:7077", "Stock Clustering", pyFiles=['/var/machine_learning/stocks/python/stocks_python.zip'])
 sqlContext = HiveContext(sc)
 
-mysql_url = "jdbc:mysql://10.0.0.8:3306/stocks?user=parallels&password=dellc123"
-
-#sample_data_rdd = sc.textFile("/var/machine_learning/stocks/data/sample_data/*.csv").distinct()
+mysql_url = "jdbc:mysql://10.211.55.4:3306/stocks?user=parallels&password=dellc123"
 
 from pyspark.sql import Row
 from stockRdd import StockRdd
@@ -20,41 +16,60 @@ from clusterHelper import ClusterHelper
 from rdd_utility import RddUtility
 from dunagan_utility import DunaganListUtility
 
-#sample_data_rdd = sc.textFile("/var/machine_learning/stocks/data/sample_data/*.csv").distinct()
-sample_data_rdd = sc.textFile("/var/machine_learning/stocks/data/historical_data/Z*.csv").distinct()
-#sample_data_rdd = sc.textFile("/var/machine_learning/stocks/data/historical_data/*.csv").distinct()
+#sample_data_rdd = sc.textFile("/var/data/stocks/sample_data/*.csv").distinct()
+#sample_data_rdd = sc.textFile("file:///var/data/stocks/historical_data/*.csv").distinct()
+sample_data_rdd = sc.textFile("file:///var/data/stocks/historical_data/*.csv").distinct()
+#sample_data_rdd = sc.textFile("file:///var/data/stocks/historical_data/Z*.csv").distinct()
 
-#sample_data_rdd = sc.textFile("/var/machine_learning/stocks/data/historical_data/UIHC.csv").distinct()
+#sample_data_rdd = sc.textFile("/var/data/stocks/historical_data/UIHC.csv").distinct()
 
-today_date = '2016-03-08'
-pastYearDateIntervalDictionary = DateIntervalManager.createDateIntervalDictionaryForPastYear(today_date)
+#sample_data_rdd = sc.textFile("hdfs://10.0.0.8:9000/stock_data/*.csv").distinct()
 
-past_year_date_code = 'past_year'
-#today_date = '2016-01-19'
+today_date = '2016-03-24'
+dateDictionaryToCalculateFor = DateIntervalManager.createDateIntervalDictionaryForPastYear(today_date)
 
-database_table_prefix = today_date.replace('-', '_') + '_' + past_year_date_code
+# We want to ensure that any stocks being calculated existed during the entire period
+number_of_days_in_dictionary = dateDictionaryToCalculateFor.getNumberOfDaysInDictionary()
+
+minimum_number_of_days = int((4.0 / 7.0) * float(number_of_days_in_dictionary))
+
+date_dictionary_code = dateDictionaryToCalculateFor.dictionary_code
 
 def getDatabaseTableName(table_suffix):
-    return database_table_prefix + '_' + table_suffix
+    table_name = date_dictionary_code + '_' + table_suffix
+    underscored_table_name = table_name.replace('-', '_')
+    return underscored_table_name
 
 
 
-mapStockCsvToKeyValueClosure = StockRdd.getMapStockCsvToKeyValueForDatesInDictionaryClosure(pastYearDateIntervalDictionary)
+mapStockCsvToKeyValueClosure = StockRdd.getMapStockCsvToKeyValueForDatesInDictionaryClosure(dateDictionaryToCalculateFor)
 
-symbol_creation_function_closure = StockRdd.getSymbolDataInstanceForDateDictionaryDataPointsClosure(pastYearDateIntervalDictionary, today_date)
-symbol_cluster_data_closure = StockRdd.getDataToClusterByDateDictionariesClosure(pastYearDateIntervalDictionary)
+symbol_creation_function_closure = StockRdd.getSymbolDataInstanceForDateDictionaryDataPointsClosure(dateDictionaryToCalculateFor, today_date)
+symbol_cluster_data_closure = StockRdd.getDataToClusterByDateDictionariesClosure(dateDictionaryToCalculateFor)
 symbol_has_none_values_closure = StockRdd.getDoesSymbolTupleHaveNoNoneValueClosure()
+
+
+print "\n\n\n\nAbout to cache symbol_cluster_data_rdd\n\n\n\n"
+
 
 symbol_cluster_data_rdd = sample_data_rdd.map(mapStockCsvToKeyValueClosure)\
                                            .filter(lambda line: not(line is None))\
                                            .reduceByKey(lambda a,b : a + b)\
                                            .map(lambda tuple : ( tuple[0], StockRdd.sort_and_compute_deltas( list(tuple[1]) ) ) )\
-                                           .filter(lambda tuple : len(list(tuple[1])) > 180)\
+                                           .filter(lambda tuple : len(list(tuple[1])) > minimum_number_of_days)\
                                            .map(symbol_creation_function_closure)\
                                            .map(symbol_cluster_data_closure)\
                                            .filter(symbol_has_none_values_closure)
 
 symbol_cluster_data_rdd.cache()
+
+
+
+
+print "\n\n\n\nJust cached symbol_cluster_data_rdd\n\n\n\n"
+
+
+
 
 symbols_clustering_lists = symbol_cluster_data_rdd.map(lambda symbolListTuple : map(lambda symbol_data_tuple : symbol_data_tuple[1], symbolListTuple[1]))\
                                                   .filter(lambda list : all(not(value is None) for value in list))
@@ -63,31 +78,47 @@ symbols_clustering_lists = symbol_cluster_data_rdd.map(lambda symbolListTuple : 
 # NEED TO FIGURE out the big O() notatation for the KMeans.train() method below in terms of k/maxIterations/runs
 
 
+
+print "\n\n\n\nAbout to cluster\n\n\n\n"
+
+
 stockKMeansClusterModel = KMeans.train(symbols_clustering_lists,k=1000,
                                maxIterations=100,runs=10,
                                initializationMode='k-means||',seed=10L)
 
+print "\n\n\n\nJust clustered\n\n\n\n"
+
+
 centers = stockKMeansClusterModel.clusterCenters
+
+print "\n\n\n\nAbout to get clusterGroupsDictionaryRdd\n\n\n\n"
+
 
 clusterGroupsDictionaryRdd = ClusterHelper.getKMModelDictionaryOfClusterMembersByTuplesRDD(stockKMeansClusterModel, symbol_cluster_data_rdd)
 
-get_overall_delta_percentage_closure = StockRdd.getOverallDeltaPercentageForClusterClosure(pastYearDateIntervalDictionary)
+get_overall_delta_percentage_closure = StockRdd.getOverallDeltaPercentageForClusterClosure(dateDictionaryToCalculateFor)
+
+print "\n\n\n\nAbout to map(get_overall_delta_percentage_closure, centers)\n\n\n\n"
+
 cluster_center_overall_deltas = map(get_overall_delta_percentage_closure, centers)
 
 converted_center_delta_list = DunaganListUtility.convert_list_to_value_and_index_tuple_list(cluster_center_overall_deltas)
 
 converted_center_delta_list.sort(lambda tuple_1, tuple_2: cmp(tuple_1[1], tuple_2[1]))
 
-
 # (ClusterId, Delta-Percentage) Row list construction
 converted_center_delta_list_rows = map(lambda delta_tuple: Row(cluster_id=int(delta_tuple[0]), delta_percentage=float(delta_tuple[1])), converted_center_delta_list)
 
 #sqlContext.sql("DROP TABLE cluster_center_overall_delta_percentages")
 
+print "\n\n\n\nAbout to sqlContext.createDataFrame(converted_center_delta_list_rows)\n\n\n\n"
+
 schemaCenterDeltas = sqlContext.createDataFrame(converted_center_delta_list_rows)
 #schemaCenterDeltas.saveAsTable("cluster_center_overall_delta_percentages")
 
-cluster_center_overall_delta_percentages_table = getDatabaseTableName('cluster_center_overall_delta_percentages')
+print "\n\n\n\nAbout to schemaCenterDeltas.write.jdbc(url=mysql_url, table=cluster_center_overall_delta_percentages_table)\n\n\n\n"
+
+cluster_center_overall_delta_percentages_table = getDatabaseTableName('cluster_total_delta_percentages')
 schemaCenterDeltas.write.jdbc(url=mysql_url, table=cluster_center_overall_delta_percentages_table, mode="overwrite")
 
 # (ClusterId,  Smybol) XRef Row List construction
@@ -110,8 +141,13 @@ cluster_id_symbol_xref_rows_rdd = sc.parallelize(cluster_id_symbol_xref_rows_lis
 
 #sqlContext.sql("DROP TABLE xref_cluster_symbol")
 
+print "\n\n\n\nAbout to schemaClusterIdSymbolXref = sqlContext.createDataFrame(cluster_id_symbol_xref_rows_rdd)\n\n\n\n"
+
+
 schemaClusterIdSymbolXref = sqlContext.createDataFrame(cluster_id_symbol_xref_rows_rdd)
 #schemaClusterIdSymbolXref.saveAsTable('xref_cluster_symbol')
+
+print "\n\n\n\nAbout to schemaClusterIdSymbolXref.write.jdbc(url=mysql_url, table=xref_cluster_symbol_table_name)\n\n\n\n"
 
 xref_cluster_symbol_table_name = getDatabaseTableName('xref_cluster_symbol')
 schemaClusterIdSymbolXref.write.jdbc(url=mysql_url, table=xref_cluster_symbol_table_name, mode="overwrite")
@@ -119,8 +155,8 @@ schemaClusterIdSymbolXref.write.jdbc(url=mysql_url, table=xref_cluster_symbol_ta
 
 # Cluster Center Row List construction
 
-#get_cluster_centers_with_span_codes_closure = getConvertClusterCentersToClusterIdSpanCodeRowsClosure(pastYearDateIntervalDictionary)
-get_cluster_centers_with_span_codes_kwargs_closure = StockRdd.getConvertDataListToSpanCodeLabeledDataRowKwargsClosure(pastYearDateIntervalDictionary)
+#get_cluster_centers_with_span_codes_closure = getConvertClusterCentersToClusterIdSpanCodeRowsClosure(dateDictionaryToCalculateFor)
+get_cluster_centers_with_span_codes_kwargs_closure = StockRdd.getConvertDataListToSpanCodeLabeledDataRowKwargsClosure(dateDictionaryToCalculateFor)
 cluster_center_with_span_codes_kwargs_list = map(get_cluster_centers_with_span_codes_kwargs_closure, centers)
 
 cluster_id = 0
@@ -133,10 +169,14 @@ cluster_center_with_span_codes_rows_list = map(lambda kwargs: Row(**kwargs), clu
 
 #sqlContext.sql("DROP TABLE cluster_center_delta_percentages")
 
+print "\n\n\n\nAbout to dataFrameClusterCenterWithSpanCodes = sqlContext.createDataFrame(cluster_center_with_span_codes_rows_list)\n\n\n\n"
+
 dataFrameClusterCenterWithSpanCodes = sqlContext.createDataFrame(cluster_center_with_span_codes_rows_list)
 #dataFrameClusterCenterWithSpanCodes.saveAsTable('cluster_center_delta_percentages')
 
-cluster_center_delta_percentages_table_name = getDatabaseTableName('cluster_center_delta_percentages')
+print "\n\n\n\nAbout to dataFrameClusterCenterWithSpanCodes.write.jdbc(url=mysql_url, table=cluster_center_delta_percentages_table_name)\n\n\n\n"
+
+cluster_center_delta_percentages_table_name = getDatabaseTableName('cluster_span_delta_percentages')
 dataFrameClusterCenterWithSpanCodes.write.jdbc(url=mysql_url, table=cluster_center_delta_percentages_table_name, mode="overwrite")
 
 # Stock Row List construction
@@ -155,15 +195,20 @@ for symbol_data_with_span_codes_tuple in symbol_cluster_data_rdd.collect():
 
 #sqlContext.sql("DROP TABLE symbol_data_delta_percentages")
 
+print "\n\n\n\nAbout to dataFrameSymbolData = sqlContext.createDataFrame(symbol_data_rows_list)\n\n\n\n"
+
+
 dataFrameSymbolData = sqlContext.createDataFrame(symbol_data_rows_list)
 #dataFrameSymbolData.saveAsTable('symbol_data_delta_percentages')
 
-symbol_data_delta_percentages_table_name = getDatabaseTableName('symbol_data_delta_percentages')
+print "\n\n\n\nAbout to dataFrameSymbolData.write.jdbc(url=mysql_url, table=symbol_data_delta_percentages_table_name)\n\n\n\n"
+
+symbol_data_delta_percentages_table_name = getDatabaseTableName('symbol_delta_percentages')
 dataFrameSymbolData.write.jdbc(url=mysql_url, table=symbol_data_delta_percentages_table_name, mode="overwrite")
 
 # Cluster Center Line Graph Data points List construction
 
-get_center_line_graph_data_point_kwargs_closure = StockRdd.getConvertDataListToLineGraphDataPointKwargsClosure(pastYearDateIntervalDictionary)
+get_center_line_graph_data_point_kwargs_closure = StockRdd.getConvertDataListToLineGraphDataPointKwargsClosure(dateDictionaryToCalculateFor)
 cluster_center_line_graph_data_point_kwargs_list = map(get_center_line_graph_data_point_kwargs_closure, centers)
 
 cluster_id = 0
@@ -175,17 +220,22 @@ cluster_center_line_graph_data_point_rows_list = map(lambda kwargs: Row(**kwargs
 
 #sqlContext.sql("DROP TABLE cluster_center_line_graph_points")
 
+print "\n\n\n\nAbout to dataFrameClusterCenterLineGraphPoints = sqlContext.createDataFrame(cluster_center_line_graph_data_point_rows_list)\n\n\n\n"
+
+
 dataFrameClusterCenterLineGraphPoints = sqlContext.createDataFrame(cluster_center_line_graph_data_point_rows_list)
 #dataFrameClusterCenterLineGraphPoints.saveAsTable('cluster_center_line_graph_points')
 
-cluster_center_line_graph_points_table_name = getDatabaseTableName('cluster_center_line_graph_points')
+print "\n\n\n\nAbout to dataFrameClusterCenterLineGraphPoints.write.jdbc(url=mysql_url, table=cluster_center_line_graph_points_table_name)\n\n\n\n"
+
+cluster_center_line_graph_points_table_name = getDatabaseTableName('cluster_line_graph_points')
 dataFrameClusterCenterLineGraphPoints.write.jdbc(url=mysql_url, table=cluster_center_line_graph_points_table_name, mode="overwrite")
 
 # Symbol Line Graph Data points List construction
 
 symbol_line_graph_points_list = []
 
-date_interval_codes = pastYearDateIntervalDictionary.getDateIntervalCodes()
+date_interval_codes = dateDictionaryToCalculateFor.getDateIntervalCodes()
 number_of_date_interval_codes = len(date_interval_codes)
 
 for symbol_data_with_span_codes_tuple in symbol_cluster_data_rdd.collect():
@@ -207,10 +257,16 @@ for symbol_data_with_span_codes_tuple in symbol_cluster_data_rdd.collect():
 
 #sqlContext.sql("DROP TABLE symbol_data_line_graph_points")
 
+print "\n\n\n\nAbout to dataFrameSymbolDataLineGraphPoints = sqlContext.createDataFrame(symbol_line_graph_points_list)\n\n\n\n"
+
+
 dataFrameSymbolDataLineGraphPoints = sqlContext.createDataFrame(symbol_line_graph_points_list)
 #dataFrameSymbolDataLineGraphPoints.saveAsTable('symbol_data_line_graph_points')
 
-symbol_data_line_graph_points_table_name = getDatabaseTableName('symbol_data_line_graph_points')
+print "\n\n\n\nAbout to dataFrameSymbolDataLineGraphPoints.write.jdbc(url=mysql_url, table=symbol_data_line_graph_points_table_name)\n\n\n\n"
+
+
+symbol_data_line_graph_points_table_name = getDatabaseTableName('symbol_line_graph_points')
 dataFrameSymbolDataLineGraphPoints.write.jdbc(url=mysql_url, table=symbol_data_line_graph_points_table_name, mode="overwrite")
 
 
@@ -219,6 +275,7 @@ dataFrameSymbolDataLineGraphPoints.write.jdbc(url=mysql_url, table=symbol_data_l
 
 
 '''
+
 test_select = sqlContext.sql("SELECT cluster_id, delta_percentage FROM cluster_center_delta_percentages")
 
 test_values = test_select.map(lambda row: "Percentage: " + str(row.delta_percentage))
@@ -257,12 +314,12 @@ clusterGroupsDictionary_file.close()
 clusterGroupsDictionary_file = open('/tmp/stocks_converted_center_delta_list.txt', 'w')
 clusterGroupsDictionary_file.write(str(converted_center_delta_list))
 clusterGroupsDictionary_file.close()
-'''
 
 
 
 
-'''
+
+
 The following was caused by some list-elements of symbols_clustering_lists have None values
 
 

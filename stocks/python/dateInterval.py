@@ -10,6 +10,7 @@ class DateInterval:
         self.start_date = start_date
         self.end_date = end_date
         self.code = code
+        self.days_in_interval = DateDelta.getDaysBetweenDateStrings(self.start_date, self.end_date)
 
     def isDateInInterval(self, date_to_compare):
         """
@@ -17,6 +18,12 @@ class DateInterval:
         :return: bool
         """
         return ((date_to_compare >= self.start_date) and (date_to_compare <= self.end_date))
+
+    def getNumberOfDaysInInterval(self):
+        """
+        :return: int
+        """
+        return self.days_in_interval
 
 
 class DateIntervalDictionary:
@@ -30,6 +37,12 @@ class DateIntervalDictionary:
         self.date_interval_dictionary = OrderedDict()
         self.earliest_date = None
         self.latest_date = None
+        self.number_of_days_in_dictionary = 0
+
+    def getDatabaseTableName(self, table_suffix):
+        table_name = self.dictionary_code + '_' + table_suffix
+        underscored_table_name = table_name.replace('-', '_')
+        return underscored_table_name
 
     def getEarliestDateInDictionary(self):
         return self.earliest_date
@@ -67,7 +80,16 @@ class DateIntervalDictionary:
         if (self.latest_date is None) or (end_date > self.latest_date):
             self.latest_date = end_date
 
+        days_in_interval = dateIntervalInstance.getNumberOfDaysInInterval()
+        self.number_of_days_in_dictionary = self.number_of_days_in_dictionary + days_in_interval
+
         return self
+
+    def getNumberOfDaysInDictionary(self):
+        """
+        :return: int
+        """
+        return self.number_of_days_in_dictionary
 
     def getDateIntervalByCode(self, interval_code):
         """
@@ -165,12 +187,30 @@ class DateIntervalFactory:
 class DateIntervalManager:
 
     @staticmethod
+    def createDailyIntervalDictionaryForPastYear(today_date):
+
+        #days_between_dates = DateDelta.getDaysBetweenDateStrings(interval_start_date, today_date)
+        days_between_dates = 1
+        interval_count = 365
+        dateIntervalDictionary = DateIntervalManager.createDateIntervalDictionaryByDays(today_date, days_between_dates, interval_count)
+
+        return dateIntervalDictionary
+
+    @staticmethod
     def createDateIntervalDictionaryForPastYear(today_date):
 
         #days_between_dates = DateDelta.getDaysBetweenDateStrings(interval_start_date, today_date)
         days_between_dates = 14
         interval_count = 26
-        dateIntervalDictionary = DateIntervalFactory.getDateIntervalDictionary(today_date, days_between_dates, interval_count, 'days', dictionary_code = 'leading_up_to_crash')
+        dateIntervalDictionary = DateIntervalManager.createDateIntervalDictionaryByDays(today_date, days_between_dates, interval_count)
+
+        return dateIntervalDictionary
+
+    @staticmethod
+    def createDateIntervalDictionaryByDays(start_date, days_per_interval, interval_count):
+
+        dictionary_code = start_date + '_' + str(interval_count) + '_of_' + str(days_per_interval) + '_days'
+        dateIntervalDictionary = DateIntervalFactory.getDateIntervalDictionary(start_date, days_per_interval, interval_count, 'days', dictionary_code = dictionary_code)
 
         return dateIntervalDictionary
 

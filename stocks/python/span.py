@@ -32,6 +32,10 @@ class Span:
             self.label_to_unit_index_mapping[label].append(unit_index)
         return self
 
+    def removeSpanUnit(self, unit_label):
+        unit_index = self.label_to_unit_index_mapping[unit_label]
+
+
     def getMaxUnitDeltaValue(self, get_percentage = False):
         """
         :param bool get_percentage:
