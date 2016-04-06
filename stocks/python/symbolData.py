@@ -158,8 +158,6 @@ class SymbolData:
 
         return min_unit_delta
 
-    def removeSpanUnitDeltaByDate(self):
-
 
 class SymbolDataCollection:
     
