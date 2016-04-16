@@ -16,7 +16,7 @@ from clusterHelper import ClusterHelper
 from rdd_utility import RddUtility
 from dunagan_utility import DunaganListUtility
 
-sample_data_rdd = sc.textFile("file:///var/data/stocks/historical_data/*.csv").distinct()
+sample_data_rdd = sc.textFile("file:///var/data/stocks/historical_data/Z*.csv").distinct()
 
 today_date = '2016-03-24'
 dailyDateIntervalDictionaryToCalculateFor = DateIntervalManager.createDailyIntervalDictionaryForPastYear(today_date)
@@ -50,7 +50,8 @@ symbol_down_stocks_data_filtered_rows = symbol_down_stocks_data_filtered\
 
 
 schemaDownStocks = sqlContext.createDataFrame(symbol_down_stocks_data_filtered_rows)
-down_stocks_table_name = dailyDateIntervalDictionaryToCalculateFor.getDatabaseTableName('down_stocks')
+#down_stocks_table_name = dailyDateIntervalDictionaryToCalculateFor.getDatabaseTableName('down_stocks')
+down_stocks_table_name='down_stocks'
 schemaDownStocks.write.jdbc(url=mysql_url, table=down_stocks_table_name, mode="overwrite")
 
 
