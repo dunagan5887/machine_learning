@@ -1,94 +1,135 @@
-
+# Include all necessary Python libraries and packages
 from pyspark import SparkContext
 from pyspark.sql import HiveContext
-
-
-sc = SparkContext("spark://10.211.55.4:7077", "Stock Clustering", pyFiles=['/var/machine_learning/stocks/python/stocks_python.zip'])
-sqlContext = HiveContext(sc)
-
-mysql_url = "jdbc:mysql://10.211.55.4:3306/stocks?user=parallels&password=dellc123"
-
 from pyspark.sql import Row
+from pyspark.mllib.clustering import KMeans
+
+# Import custom-built modules for this script
 from stockRdd import StockRdd
 from dateInterval import DateIntervalManager
-from pyspark.mllib.clustering import KMeans
 from clusterHelper import ClusterHelper
-from rdd_utility import RddUtility
 from dunagan_utility import DunaganListUtility
 
-#sample_data_rdd = sc.textFile("/var/data/stocks/sample_data/*.csv").distinct()
-#sample_data_rdd = sc.textFile("file:///var/data/stocks/historical_data/*.csv").distinct()
-sample_data_rdd = sc.textFile("file:///var/data/stocks/historical_data/*.csv").distinct()
-#sample_data_rdd = sc.textFile("file:///var/data/stocks/historical_data/Z*.csv").distinct()
+# In a production-environment example, these values would be configured outside of this file, not within this script
+spark_url = "spark://10.211.55.4:7077"
+spark_context_name = "Stock Clustering"
+included_python_files_package = ['/var/machine_learning/stocks/python/stocks_python.zip']
+mysql_url = "jdbc:mysql://10.211.55.4:3306/stocks?user=parallels&password=dellc123"
+data_files = "file:///var/data/stocks/historical_data/Z*.csv"
 
-#sample_data_rdd = sc.textFile("/var/data/stocks/historical_data/UIHC.csv").distinct()
-
-#sample_data_rdd = sc.textFile("hdfs://10.0.0.8:9000/stock_data/*.csv").distinct()
-
+# In a production-environment example, this value would be dynamically generated using
 today_date = '2016-03-24'
+
+# Instantiate the Spark Context to be used for this script
+sc = SparkContext(spark_url, spark_context_name, pyFiles=included_python_files_package)
+sqlContext = HiveContext(sc)
+
+# Initialize the RDD with the stock data files
+sample_data_rdd = sc.textFile(data_files).distinct()
+
+# Create a dictionary containing date-intervals to represent 26 intervals of 2-week spans spanning the past year
 dateDictionaryToCalculateFor = DateIntervalManager.createDateIntervalDictionaryForPastYear(today_date)
 
 # We want to ensure that any stocks being calculated existed during the entire period
 number_of_days_in_dictionary = dateDictionaryToCalculateFor.getNumberOfDaysInDictionary()
+minimum_number_of_days_for_stock = int((4.0 / 7.0) * float(number_of_days_in_dictionary))
 
-minimum_number_of_days = int((4.0 / 7.0) * float(number_of_days_in_dictionary))
+# map_stock_csv_to_key_value_closure is a function closure that will filter out lines of data whose dates are outside of the
+#   time-frame we are concerned about
+map_stock_csv_to_key_value_closure = StockRdd.getMapStockCsvToKeyValueForDatesInDictionaryClosure(dateDictionaryToCalculateFor)
 
-date_dictionary_code = dateDictionaryToCalculateFor.dictionary_code
-
-def getDatabaseTableName(table_suffix):
-    table_name = date_dictionary_code + '_' + table_suffix
-    underscored_table_name = table_name.replace('-', '_')
-    return underscored_table_name
-
-
-
-mapStockCsvToKeyValueClosure = StockRdd.getMapStockCsvToKeyValueForDatesInDictionaryClosure(dateDictionaryToCalculateFor)
-
+# symbol_creation_function_closure is a function closure which will convert the list of csv data lines to a SymbolData object
+#   which can return the data points we need to cluster a stock
 symbol_creation_function_closure = StockRdd.getSymbolDataInstanceForDateDictionaryDataPointsClosure(dateDictionaryToCalculateFor, today_date)
+
+# symbol_cluster_data_closure is a function closure which will convert a SymbolData object to a list of data points which
+#   should be used to cluster stocks by
 symbol_cluster_data_closure = StockRdd.getDataToClusterByDateDictionariesClosure(dateDictionaryToCalculateFor)
+
+# symbol_has_none_values_closure is a function closure which will return False is any of the values in the list of data points
+#   returned by symbol_cluster_data_closure contains a None value; it will return True otherwise
 symbol_has_none_values_closure = StockRdd.getDoesSymbolTupleHaveNoNoneValueClosure()
 
+print "\n\n\n\nAbout to Map and Reduce Data\n\n\n\n"
 
-print "\n\n\n\nAbout to cache symbol_cluster_data_rdd\n\n\n\n"
+"""
+symbol_cluster_data_rdd will be an RDD of tuples. Each tuple will contain a stock symbol in index 0 and a list of tuples
+    in index 1. This list of tuples will be of the form (data_points_description, data_point_value). These tuple values
+    will comprise the data points by which we will cluster stocks. The various functions necessary to construct
+    symbol_cluster_data_rdd are described below:
 
+.map(map_stock_csv_to_key_value_closure) - Take the raw csv input data lines and filter out unnecessary data
+.filter(lambda line: not(line is None)) - Filter out all lines which are empty
+.reduceByKey(lambda a,b : a + b) - Reduce the filtered data by key. The keys are the stocks' symbols
+.map(lambda tuple : ( tuple[0], StockRdd.sort_and_compute_deltas( list(tuple[1]) ) ) ) - Sort the filtered data by date
+                                                                                            and compute the percentage change
+                                                                                            in stock price from day to day
+.filter(lambda tuple : len(list(tuple[1])) > minimum_number_of_days_for_stock) - Filter out stocks which weren't listed on
+                                                                                    their respective exchange for the entire
+                                                                                    duration of the time frame
+.map(symbol_creation_function_closure) - Convert the lists of data points into SymbolData objects. These SymbolData objects
+                                            have logic to compute the change in price over a time span or the average closing
+                                            price over a time span in addition to other logic
+.map(symbol_cluster_data_closure) - Create a list of data points from the SymbolData objects which will be used as the data
+                                        to cluster stocks by
+.filter(symbol_has_none_values_closure) - Filter out any stocks which have any None values for any of the data points computed
+                                            by step ".map(symbol_cluster_data_closure)"
 
-symbol_cluster_data_rdd = sample_data_rdd.map(mapStockCsvToKeyValueClosure)\
+"""
+
+symbol_cluster_data_rdd = sample_data_rdd.map(map_stock_csv_to_key_value_closure)\
                                            .filter(lambda line: not(line is None))\
                                            .reduceByKey(lambda a,b : a + b)\
                                            .map(lambda tuple : ( tuple[0], StockRdd.sort_and_compute_deltas( list(tuple[1]) ) ) )\
-                                           .filter(lambda tuple : len(list(tuple[1])) > minimum_number_of_days)\
+                                           .filter(lambda tuple : len(list(tuple[1])) > minimum_number_of_days_for_stock)\
                                            .map(symbol_creation_function_closure)\
                                            .map(symbol_cluster_data_closure)\
                                            .filter(symbol_has_none_values_closure)
 
-symbol_cluster_data_rdd.cache()
+print "\n\n\n\nJust mapped and reduced data\n\n\n\n"
 
 
+print "\n\n\n\nAbout to produce lists to feed to KMeans.train()\n\n\n\n"
 
+"""
 
-print "\n\n\n\nJust cached symbol_cluster_data_rdd\n\n\n\n"
+symbols_clustering_lists is the list of stock data that will be fed into the KMeans.train() function to produce our clustering
+    model. symbolListTuple is a tuple produced by symbol_cluster_data_closure(). symbol_data_tuple[1] will refer to the
+    actual data point value for each data point we are going to be using to cluster stock data. We will also once again
+    filter out any stocks which have any None values for any of the data points just to be sure that no None values are
+    breaking the clustering algorithm
 
-
-
+"""
 
 symbols_clustering_lists = symbol_cluster_data_rdd.map(lambda symbolListTuple : map(lambda symbol_data_tuple : symbol_data_tuple[1], symbolListTuple[1]))\
                                                   .filter(lambda list : all(not(value is None) for value in list))
 
-
 # NEED TO FIGURE out the big O() notatation for the KMeans.train() method below in terms of k/maxIterations/runs
 
+"""
 
+The Big O notation for the KMeans clustering algorithm is O(n*d*k*i*r):
+    n - Number of stocks being clustered (5392 as of my most recent execution)
+    d - dimensions included for each stock's "vector" (in this script's implementation: 27)
+    k - The number of clusters to reduce to (set below as 1000)
+    i - The number of iterations (Maxed at 100 below)
+    r - The number of runs to compute for (Set to 10 below)
 
-print "\n\n\n\nAbout to cluster\n\n\n\n"
+As such, using the numbers above, this particular KMeans clustering exeuction can be worst-case expeced to be on the
+order of O(145,584,000,000).
 
+"""
 
+print "\n\n\n\nAbout to produce clustering model\n\n\n\n"
+
+# Execute KMeans.train() as defined by the pyspark.mllib.clustering module
 stockKMeansClusterModel = KMeans.train(symbols_clustering_lists,k=1000,
                                maxIterations=100,runs=10,
                                initializationMode='k-means||',seed=10L)
 
-print "\n\n\n\nJust clustered\n\n\n\n"
+print "\n\n\n\nJust produced clustering model\n\n\n\n"
 
-
+# Get the centers produced by the clustering model
 centers = stockKMeansClusterModel.clusterCenters
 
 print "\n\n\n\nAbout to get clusterGroupsDictionaryRdd\n\n\n\n"
@@ -118,8 +159,7 @@ schemaCenterDeltas = sqlContext.createDataFrame(converted_center_delta_list_rows
 
 print "\n\n\n\nAbout to schemaCenterDeltas.write.jdbc(url=mysql_url, table=cluster_center_overall_delta_percentages_table)\n\n\n\n"
 
-cluster_center_overall_delta_percentages_table = getDatabaseTableName('cluster_total_delta_percentages')
-schemaCenterDeltas.write.jdbc(url=mysql_url, table=cluster_center_overall_delta_percentages_table, mode="overwrite")
+schemaCenterDeltas.write.jdbc(url=mysql_url, table='cluster_total_delta_percentages', mode="overwrite")
 
 # (ClusterId,  Smybol) XRef Row List construction
 
@@ -149,8 +189,7 @@ schemaClusterIdSymbolXref = sqlContext.createDataFrame(cluster_id_symbol_xref_ro
 
 print "\n\n\n\nAbout to schemaClusterIdSymbolXref.write.jdbc(url=mysql_url, table=xref_cluster_symbol_table_name)\n\n\n\n"
 
-xref_cluster_symbol_table_name = getDatabaseTableName('xref_cluster_symbol')
-schemaClusterIdSymbolXref.write.jdbc(url=mysql_url, table=xref_cluster_symbol_table_name, mode="overwrite")
+schemaClusterIdSymbolXref.write.jdbc(url=mysql_url, table='xref_cluster_symbol', mode="overwrite")
 
 
 # Cluster Center Row List construction
@@ -176,8 +215,7 @@ dataFrameClusterCenterWithSpanCodes = sqlContext.createDataFrame(cluster_center_
 
 print "\n\n\n\nAbout to dataFrameClusterCenterWithSpanCodes.write.jdbc(url=mysql_url, table=cluster_center_delta_percentages_table_name)\n\n\n\n"
 
-cluster_center_delta_percentages_table_name = getDatabaseTableName('cluster_span_delta_percentages')
-dataFrameClusterCenterWithSpanCodes.write.jdbc(url=mysql_url, table=cluster_center_delta_percentages_table_name, mode="overwrite")
+dataFrameClusterCenterWithSpanCodes.write.jdbc(url=mysql_url, table='cluster_span_delta_percentages', mode="overwrite")
 
 # Stock Row List construction
 symbol_data_rows_list = []
@@ -203,8 +241,7 @@ dataFrameSymbolData = sqlContext.createDataFrame(symbol_data_rows_list)
 
 print "\n\n\n\nAbout to dataFrameSymbolData.write.jdbc(url=mysql_url, table=symbol_data_delta_percentages_table_name)\n\n\n\n"
 
-symbol_data_delta_percentages_table_name = getDatabaseTableName('symbol_delta_percentages')
-dataFrameSymbolData.write.jdbc(url=mysql_url, table=symbol_data_delta_percentages_table_name, mode="overwrite")
+dataFrameSymbolData.write.jdbc(url=mysql_url, table='symbol_delta_percentages', mode="overwrite")
 
 # Cluster Center Line Graph Data points List construction
 
@@ -228,8 +265,7 @@ dataFrameClusterCenterLineGraphPoints = sqlContext.createDataFrame(cluster_cente
 
 print "\n\n\n\nAbout to dataFrameClusterCenterLineGraphPoints.write.jdbc(url=mysql_url, table=cluster_center_line_graph_points_table_name)\n\n\n\n"
 
-cluster_center_line_graph_points_table_name = getDatabaseTableName('cluster_line_graph_points')
-dataFrameClusterCenterLineGraphPoints.write.jdbc(url=mysql_url, table=cluster_center_line_graph_points_table_name, mode="overwrite")
+dataFrameClusterCenterLineGraphPoints.write.jdbc(url=mysql_url, table='cluster_line_graph_points', mode="overwrite")
 
 # Symbol Line Graph Data points List construction
 
@@ -266,83 +302,4 @@ dataFrameSymbolDataLineGraphPoints = sqlContext.createDataFrame(symbol_line_grap
 print "\n\n\n\nAbout to dataFrameSymbolDataLineGraphPoints.write.jdbc(url=mysql_url, table=symbol_data_line_graph_points_table_name)\n\n\n\n"
 
 
-symbol_data_line_graph_points_table_name = getDatabaseTableName('symbol_line_graph_points')
-dataFrameSymbolDataLineGraphPoints.write.jdbc(url=mysql_url, table=symbol_data_line_graph_points_table_name, mode="overwrite")
-
-
-
-
-
-
-'''
-
-test_select = sqlContext.sql("SELECT cluster_id, delta_percentage FROM cluster_center_delta_percentages")
-
-test_values = test_select.map(lambda row: "Percentage: " + str(row.delta_percentage))
-
-for value in test_values.collect():
-    print value
-
-rddClusterIdSymbolXrefSelect = sqlContext.sql("SELECT cluster_id,symbol FROM xref_cluster_symbol")
-
-for xref in rddClusterIdSymbolXrefSelect.collect():
-    print "cluster_id: {0}\t\tsymbol: {1}".format(xref.cluster_id, xref.symbol)
-
-
-rddClusterIdSymbolXrefSelect = sqlContext.sql("SELECT * FROM xref_cluster_symbol")
-
-for xref in rddClusterIdSymbolXrefSelect.collect():
-    print "cluster_id: {0}\t\tsymbol: {1}".format(xref.cluster_id, xref.symbol)
-
-
-
-# NEED TO SEE WHY SOME OF THE LISTS CONTAINED NULL VALUES
-
-
-clusterGroupsDictionary_file = open('/tmp/stocks_symbols_clustering_lists.txt', 'w')
-clusterGroupsDictionary_file.write(str(symbols_clustering_lists.collect()))
-clusterGroupsDictionary_file.close()
-
-clusterGroupsDictionary_file = open('/tmp/stocks_clusterGroupCenters.txt', 'w')
-clusterGroupsDictionary_file.write(str(centers))
-clusterGroupsDictionary_file.close()
-
-clusterGroupsDictionary_file = open('/tmp/stocks_clusterGroupsDictionary.txt', 'w')
-clusterGroupsDictionary_file.write(str(clusterGroupsDictionary))
-clusterGroupsDictionary_file.close()
-
-clusterGroupsDictionary_file = open('/tmp/stocks_converted_center_delta_list.txt', 'w')
-clusterGroupsDictionary_file.write(str(converted_center_delta_list))
-clusterGroupsDictionary_file.close()
-
-
-
-
-
-
-The following was caused by some list-elements of symbols_clustering_lists have None values
-
-
-
-16/02/13 19:24:24 INFO Executor: Finished task 6357.0 in stage 43.0 (TID 114443). 1161 bytes result sent to driver
-16/02/13 19:24:24 INFO TaskSetManager: Finished task 6357.0 in stage 43.0 (TID 114443) in 2 ms on localhost (6358/6358)
-16/02/13 19:24:24 INFO DAGScheduler: ResultStage 43 (collectAsMap at KMeans.scala:302) finished in 11.418 s
-16/02/13 19:24:24 INFO TaskSchedulerImpl: Removed TaskSet 43.0, whose tasks have all completed, from pool
-16/02/13 19:24:24 INFO DAGScheduler: Job 13 finished: collectAsMap at KMeans.scala:302, took 25.930120 s
-16/02/13 19:24:24 INFO MapPartitionsRDD: Removing RDD 11 from persistence list
-16/02/13 19:24:24 INFO BlockManager: Removing RDD 11
-Traceback (most recent call last):
-  File "<stdin>", line 3, in <module>
-  File "/home/parallels/Programs/spark/spark-1.5.2-bin-hadoop2.6/python/pyspark/mllib/clustering.py", line 150, in train
-    runs, initializationMode, seed, initializationSteps, epsilon)
-  File "/home/parallels/Programs/spark/spark-1.5.2-bin-hadoop2.6/python/pyspark/mllib/common.py", line 130, in callMLlibFunc
-    return callJavaFunc(sc, api, *args)
-  File "/home/parallels/Programs/spark/spark-1.5.2-bin-hadoop2.6/python/pyspark/mllib/common.py", line 123, in callJavaFunc
-    return _java2py(sc, func(*args))
-  File "/home/parallels/Programs/spark/spark-1.5.2-bin-hadoop2.6/python/lib/py4j-0.8.2.1-src.zip/py4j/java_gateway.py", line 538, in __call__
-  File "/home/parallels/Programs/spark/spark-1.5.2-bin-hadoop2.6/python/pyspark/sql/utils.py", line 42, in deco
-    raise IllegalArgumentException(s.split(': ', 1)[1])
-pyspark.sql.utils.IllegalArgumentException: requirement failed
->>>
-
-'''
+dataFrameSymbolDataLineGraphPoints.write.jdbc(url=mysql_url, table='symbol_line_graph_points', mode="overwrite")
