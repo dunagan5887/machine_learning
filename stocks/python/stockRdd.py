@@ -51,6 +51,8 @@ class StockRdd:
     @staticmethod
     def getConvertDataListToLineGraphDataPointKwargsClosure(dateIntervalDictionary):
         """
+            This function produces a function closure described below
+
         :param DateIntervalDictionary dateIntervalDictionary:
         :return: function-closure
         """
@@ -58,8 +60,15 @@ class StockRdd:
         number_of_date_interval_codes = len(date_interval_codes)
         def getConvertDataListToLineGraphDataPointKwargs(cluster_data_points_list):
             """
+                This function takes as input cluster_data_points_list which is a list containing data points representing
+                    the percentage change in a cluster's price over a given number of time spans. This function will
+                    calculate the ratio of the cluster's price at the end of each time span compared to the initial price
+                    of the cluster. These values will be used to create line graphs showing the performance of the cluster
+                    over a time frame. The ratio values will be used to create a kwargs dictionary. The kwargs dictionary
+                    will be used to create a Row object which will be inserted into a database table
+
             :param list cluster_data_points_list:
-            :return: Row
+            :return: dict
             """
             kwargs_dict = {}
             index = 0
@@ -78,6 +87,8 @@ class StockRdd:
     @staticmethod
     def getConvertDataListToSpanCodeLabeledDataRowKwargsClosure(dateIntervalDictionary):
         """
+            This function produces a function closure described below
+
         :param DateIntervalDictionary dateIntervalDictionary:
         :return: function-closure
         """
@@ -85,12 +96,19 @@ class StockRdd:
         number_of_date_interval_codes = len(date_interval_codes)
         def getConvertDataListToSpanCodeLabeledDataRowKwargs(cluster_data_points_list):
             """
-            :param list cluster_data_points_list:
-            :return: Row
+                This function will produce a dictionary from a list of data points which define a cluster. The purpose of
+                    this dictionary is to be used as a kwargs argument to construct a Row object
+
+            :param list cluster_data_points_list: List of data points which define a cluster
+            :return: dict - A dictionary which will represent the fields which should be used to instantiate a Row object
+                                to be inserted into the database
             """
+            # Initialize the dictionary
             kwargs_dict = {}
             index = 0
             for data_point in cluster_data_points_list:
+                # The first `number_of_date_interval_codes` values in cluster_data_points_list will represent the
+                #       percentage change in a symbol's price over a time span
                 if index < number_of_date_interval_codes:
                     span_code = date_interval_codes[index]
                     kwargs_dict[span_code] = float(data_point)
@@ -103,19 +121,31 @@ class StockRdd:
     @staticmethod
     def getOverallDeltaPercentageForClusterClosure(dateIntervalDictionary):
         """
+            This method will return a function closure which computes the overall change in a cluster's price. This
+                will be computed as a ratio of end price to open price.
+
         :param DateIntervalDictionary dateIntervalDictionary:
-        :return: lambda
+        :return: function closure
         """
+        # Get the date interval codes relevant to the Date Interval Dictionary
         date_interval_codes = dateIntervalDictionary.getDateIntervalCodes()
+        # Get the number of date intervals in the dictionary
         number_of_date_interval_codes = len(date_interval_codes)
         def getOverallDeltaPercentageForCluster(cluster_data_points_list):
             """
-            :param list cluster_data_points_list:
-            :return: float
+                This function will compute the ratio of the cluster's end price to it's starting price. This gives us
+                    a general idea of how well the stocks in this cluster performed of the entirety of the time span
+                    defined by the dateIntervalDictionary passed in above
+
+            :param list cluster_data_points_list: The list of data points which define the cluster
+            :return: float - The ratio of the cluster's end price to open price. E.g. if this cluster represents a stock
+                                which rose 20% over the course of the time span, this function wouldn return 1.2
             """
             total_delta_percentage = 1.0
             index = 0
             for data_point in cluster_data_points_list:
+                # The first `number_of_date_interval_codes` elements in the cluster_data_points_list represent the percentage
+                #   change in the cluster's price for each time interval in the dateIntervalDictionary
                 if index < number_of_date_interval_codes:
                     total_delta_percentage = total_delta_percentage * (1.0 + data_point)
                 index = index + 1

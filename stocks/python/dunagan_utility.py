@@ -10,9 +10,16 @@ class DunaganListUtility:
 
     @staticmethod
     def convert_list_to_value_and_index_tuple_list(list_to_convert):
+        """
+        Convert the passed in list_to_convert to a list containing tuples mapping each element's index to its value
+
+        :param list_to_convert:
+        :return:
+        """
         index = 0
         converted_list = []
         for data_value in list_to_convert:
+            # Create a tuple mapping the element's index to its value
             tuple = (index, data_value)
             converted_list.append(tuple)
             index = index + 1
