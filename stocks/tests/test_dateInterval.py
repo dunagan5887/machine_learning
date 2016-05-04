@@ -157,10 +157,10 @@ class TestDateIntervalFactory(unittest.TestCase):
         self.direction_one = True
         self.test_dictionary_of_date_intervals_one = DateIntervalFactory.getDateIntervalDates(self.start_date, self.frequency_one, self.count_one, self.unit_one, self.direction_one)
         self.expected_interval_dates_one = OrderedDict()
-        self.expected_interval_dates_one['0_3_weeks'] = ['2015-12-08', '2015-12-29']
-        self.expected_interval_dates_one['3_6_weeks'] = ['2015-11-17', '2015-12-08']
-        self.expected_interval_dates_one['6_9_weeks'] = ['2015-10-27', '2015-11-17']
         self.expected_interval_dates_one['9_12_weeks'] = ['2015-10-06', '2015-10-27']
+        self.expected_interval_dates_one['6_9_weeks'] = ['2015-10-27', '2015-11-17']
+        self.expected_interval_dates_one['3_6_weeks'] = ['2015-11-17', '2015-12-08']
+        self.expected_interval_dates_one['0_3_weeks'] = ['2015-12-08', '2015-12-29']
 
         self.frequency_two = 30
         self.count_two = 3
@@ -237,7 +237,7 @@ class TestDateIntervalFactory(unittest.TestCase):
         self.assertIsNone(test_interval_codes_for_date_two_backwards)
         test_date_four = '2015-12-08'
         test_interval_codes_for_date_four_backwards = self.test_date_interval_dictionary_backwards.getIntervalCodesByDate(test_date_four)
-        expected_interval_codes_for_date_four_backwards = [self.test_dates_interval_four_code_one, self.test_dates_interval_four_code_two]
+        expected_interval_codes_for_date_four_backwards = [self.test_dates_interval_four_code_two, self.test_dates_interval_four_code_one]
         self.assertEqual(test_interval_codes_for_date_four_backwards, expected_interval_codes_for_date_four_backwards)
         test_date_five = '2015-10-15'
         test_interval_codes_for_date_five_backwards = self.test_date_interval_dictionary_backwards.getIntervalCodesByDate(test_date_five)

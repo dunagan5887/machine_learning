@@ -181,6 +181,18 @@ class DateIntervalFactory:
             datetime_to_act_from = interval_datetime
             datetime_to_act_from_string = interval_date_string
 
+        # We want the date_interval_dates_dict to be ordered chronologically
+        if direction_is_past:
+            reordered_interval_dates_dict = OrderedDict()
+            interval_dates_items = date_interval_dates_dict.items()
+            while interval_dates_items:
+                date_interval_tuple = date_interval_dates_dict.popitem()
+                span_code = date_interval_tuple[0]
+                date_interval = date_interval_tuple[1]
+                reordered_interval_dates_dict[span_code] = date_interval
+                interval_dates_items = date_interval_dates_dict.items()
+            return reordered_interval_dates_dict
+
         return date_interval_dates_dict
 
 

@@ -180,8 +180,6 @@ class StockRdd:
 
             # Build a list of tuples containing the points we will want to use to cluster the stocks
             data_list = []
-            span_today_price_off_average = None
-
             # For each time span contained in dateIntervalDictionary
             for span_code in date_interval_codes:
 
@@ -193,16 +191,6 @@ class StockRdd:
                 # Create a tuple containing the span code and the percentage rise/fall and add it to the list
                 span_code_and_delta_percentage_tuple = (span_code, span_delta_percentage)
                 data_list.append(span_code_and_delta_percentage_tuple)
-
-                # One of the data points we want is the stocks' "Today" price divided by the average closing price of
-                #   the most recent span. The span codes in date_interval_codes should be ordered with the most recent
-                #   span first
-                span_average = spanInstance.getSpanCloseAverage()
-                if not(span_average is None) and (span_today_price_off_average is None):
-                    # Add the span_today_price_off_average value to our list of data point tuples
-                    span_today_price_off_average = symbolDataInstance.getTodayPriceOffSpanAverage(span_code)
-                    span_today_price_off_average_tuple = ('span_today_price_off_average', span_today_price_off_average)
-                    data_list.append(span_today_price_off_average_tuple)
 
             # Return the tuple mapping the stock's symbol to the list of data-points tuples
             return (symbol_code, data_list)

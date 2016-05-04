@@ -14,7 +14,7 @@ from dunagan_utility import DunaganListUtility
 spark_url = "spark://10.211.55.4:7077"
 spark_context_name = "Stock Clustering"
 included_python_files_package = ['/var/machine_learning/stocks/python/stocks_python.zip']
-mysql_url = "jdbc:mysql://10.211.55.4:3306/stocks?user=parallels&password=dellc123"
+mysql_url = "jdbc:mysql://localhost:3306/stocks?user=parallels&password=dellc123"
 data_files = "file:///var/data/stocks/historical_data/Z*.csv"
 
 # In a production-environment example, this value would be dynamically generated using
@@ -296,6 +296,7 @@ for symbol_data_with_span_codes_tuple in symbol_cluster_data_rdd.collect():
             # Use the span_code as the name of the database column
             span_code = span_code_and_data_point_tuple[0]
             data_point = span_code_and_data_point_tuple[1]
+            print str(span_code) + " => " + str(data_point)
             delta_percentage = float(data_point) # NEED TO FIGURE OUT WHY SOME SYMBOLS HAVE NONE FOR data_point here
             # total_delta_percentage represents the ratio in the symbol's price after this time interval relative to
             #       its price at the beginning of the time frame defined by dateDictionaryToCalculateFor
