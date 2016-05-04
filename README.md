@@ -45,4 +45,6 @@ and a graph showing the performance of the cluster over the course of the year. 
 be sorted and filtered using the interface on the grid. Clicking on a cluster's row will take you to a page showing all of 
 the stocks in the cluster. This second page will show the stock's symbol and a graph showing the stock's performance over
 the course of the year. These graphs are constructed using 26 data points, each one being the percentage rise/fall in the
-price of the stock over the course of a 14 day period.
+price of the stock over the course of a 14 day period. Note that due to the fact that the exact dates used to create these
+graphs may not be the exact dates used to render the graphs on wsj.com. Given that Yahoo finance uses every date's closing price
+to render their graphs, their site may provide a better method of verifying the graphs.
