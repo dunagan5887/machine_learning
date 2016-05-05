@@ -6,6 +6,10 @@ from pyspark.sql import Row
 # NEED_UNIT_TESTS
 
 class StockRdd:
+    """
+    In a real-world scenario this class would not contain all of these methods. This class was not created to display
+        modularization or encapsulation of logic
+    """
 
     SYMBOL_INDEX = 0
     DATE_INDEX = 1
@@ -199,28 +203,23 @@ class StockRdd:
         return getDataToClusterByDateDictionaries
 
     @staticmethod
-    def getDownStocksDataListClosure(today_date):
+    def getDownStocksDataTuple(symbol_and_instance_tuple): # type: SymbolData
         """
-        :return: function
+        :param SymbolData symbolInstance:
+        :return: tuple
         """
-        def getDownStocksDataList(symbol_and_instance_tuple): # type: SymbolData
-            """
-            :param SymbolData symbolInstance:
-            :return: tuple
-            """
-            symbol = symbol_and_instance_tuple[0]
-            symbolInstance = symbol_and_instance_tuple[1]
-            # Remove today's date from the getMinSpanUnitDelta calculation
-            min_span_unit_delta_percentage = symbolInstance.getMinSpanUnitDelta(get_percentage_delta = True)
-            today_unit_delta_percentage = symbolInstance.getTodayDeltaPercentage()
-            today_price = symbolInstance.getTodayPrice()
-            if today_unit_delta_percentage >= 0.0:
-                return (symbol, None, today_price, today_unit_delta_percentage)
-            if min_span_unit_delta_percentage >= 0.0:
-                return (symbol, float("inf"), today_price, today_unit_delta_percentage)
-            span_unit_delta_percentage_ratio = today_unit_delta_percentage / min_span_unit_delta_percentage
-            return (symbol, span_unit_delta_percentage_ratio, today_price, today_unit_delta_percentage)
-        return getDownStocksDataList
+        symbol = symbol_and_instance_tuple[0]
+        symbolInstance = symbol_and_instance_tuple[1]
+        # TODO: Remove today's date from the getMinSpanUnitDelta calculation
+        min_span_unit_delta_percentage = symbolInstance.getMinSpanUnitDelta(get_percentage_delta = True)
+        today_unit_delta_percentage = symbolInstance.getTodayDeltaPercentage()
+        today_price = symbolInstance.getTodayPrice()
+        if today_unit_delta_percentage >= 0.0:
+            return (symbol, None, today_price, today_unit_delta_percentage)
+        if min_span_unit_delta_percentage >= 0.0:
+            return (symbol, float("inf"), today_price, today_unit_delta_percentage)
+        span_unit_delta_percentage_ratio = today_unit_delta_percentage / min_span_unit_delta_percentage
+        return (symbol, span_unit_delta_percentage_ratio, today_price, today_unit_delta_percentage)
 
     @staticmethod
     def getSymbolDataInstanceForDateDictionaryDataPointsClosure(dateIntervalDictionary, today_date):
