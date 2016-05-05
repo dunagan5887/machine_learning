@@ -6,7 +6,7 @@
  * Time: 1:56 PM
  */
 
-include('./utility.php');
+include('/var/machine_learning/stocks/scripts/utility.php');
 ensure_data_directory_exists();
 
 function get_file_data_as_array($file_path)
@@ -36,36 +36,3 @@ function download_stock_data_history_by_symbol($stock_symbol)
     $filepath = $historical_stock_data_directory . $historical_stock_data_filename;
     file_put_contents($filepath, $symbol_included_historical_stock_data);
 }
-
-$listings_dir = get_data_subdirectory('listings');
-ensure_directory_exists($listings_dir);
-$nyse_file = $listings_dir . "nyse.csv";
-$nasdaq_file = $listings_dir . "nasdaq.csv";
-
-$files_array = array($nyse_file, $nasdaq_file);
-
-$symbol_count = 0;
-
-foreach($files_array as $file_path)
-{
-    $csv_file_data_as_array = get_file_data_as_array($file_path);
-    foreach($csv_file_data_as_array as $stock_data_as_string)
-    {
-
-        /*
-        if ($symbol_count > 5)
-        {
-            exit;
-        }
-        */
-
-
-        $stock_data_as_array = explode(',', $stock_data_as_string);
-        $symbol_index_with_quotes = reset($stock_data_as_array);
-        $symbol = str_replace('"', '', $symbol_index_with_quotes);
-        download_stock_data_history_by_symbol($symbol);
-
-        $symbol_count++;
-    }
-}
-
