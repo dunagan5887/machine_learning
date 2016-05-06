@@ -2,7 +2,7 @@ from datetime import timedelta
 from datetime import datetime
 from collections import OrderedDict
 from dateDelta import DateDelta
-
+import time
 
 class DateInterval:
     
@@ -25,6 +25,15 @@ class DateInterval:
         """
         return self.days_in_interval
 
+    @staticmethod
+    def getYesterdayDate():
+        today_date = time.strftime("%Y-%m-%d")
+        datetime_to_act_from = datetime.strptime(today_date, '%Y-%m-%d')
+        method_arguments_dict = {'days': 1}
+        one_day_delta = timedelta(**method_arguments_dict)
+        interval_datetime = datetime_to_act_from - one_day_delta
+        interval_date_string = interval_datetime.strftime('%Y-%m-%d')
+        return interval_date_string
 
 class DateIntervalDictionary:
     
